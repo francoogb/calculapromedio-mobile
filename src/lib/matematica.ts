@@ -62,6 +62,18 @@ export function fmtNumero(n: number, decimales = 4): string {
   return parseFloat(n.toFixed(decimales)).toLocaleString('es-CL', { maximumFractionDigits: decimales });
 }
 
+/** Pesos chilenos sin decimales: 1234567.8 → "$1.234.568" */
+export function fmtPesos(n: number): string {
+  const signo = n < 0 ? '−' : '';
+  return `${signo}$${Math.round(Math.abs(n)).toLocaleString('es-CL')}`;
+}
+
+/** Lee un monto en pesos: ignora "$" y puntos de miles ("1.500.000" → 1500000). */
+export function leerPesos(txt: string): number {
+  const limpio = txt.replace(/[$\s.]/g, '').replace(',', '.');
+  return limpio === '' ? NaN : Number(limpio);
+}
+
 /** Lee un número escrito por el usuario (acepta coma decimal y signo negativo). */
 export function leerNumero(txt: string): number {
   const limpio = txt.trim().replace(',', '.');
