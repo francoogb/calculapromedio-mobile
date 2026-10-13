@@ -1,6 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { Stack, router } from 'expo-router';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
@@ -9,336 +8,274 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  useColorScheme,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { ThemedView } from '@/components/themed-view';
-import { Colors, Spacing } from '@/constants/theme';
+import { HeaderCalculadora } from '@/components/calculadora/header-calculadora';
+import {
+  AvisoInfo,
+  BarraAcciones,
+  BotonAgregar,
+  BotonPildora,
+  BotonPrimario,
+  ExplicacionPlegable,
+  Seccion,
+} from '@/components/calculadora/piezas';
+import { DetalleCalculo, TarjetaResultado } from '@/components/calculadora/resultado';
+import { Acento, Colors, Spacing } from '@/constants/theme';
+import { guardarEnHistorial } from '@/lib/storage';
+
+const CALC_ID = 'promedio-simple';
+const colors = Colors.dark;
+
+// Medidas compartidas para que número, input y encabezado queden alineados
+const ANCHO_NUMERO = 44;
+const ANCHO_ACCION = 36;
+const ALTO_INPUT = 50;
+const GAP = 10;
 
 type Nota = {
   id: string;
   valor: string;
 };
 
-function nuevaNota(): Nota {
-  return { id: Math.random().toString(36).slice(2), valor: '' };
+function nuevaNota(valor = ''): Nota {
+  return { id: Math.random().toString(36).slice(2, 9), valor };
+}
+
+function notasIniciales(): Nota[] {
+  return [nuevaNota(), nuevaNota(), nuevaNota()];
+}
+
+function aNumero(txt: string): number {
+  return parseFloat(txt.replace(',', '.'));
+}
+
+function notaValida(n: number): boolean {
+  return Number.isFinite(n) && n >= 1 && n <= 7;
+}
+
+// 5.0 → "5.0", 6.25 → "6.25" (las notas siempre con al menos un decimal)
+function fmtNota(n: number): string {
+  const r = parseFloat(n.toFixed(2));
+  return Number.isInteger(r) ? r.toFixed(1) : String(r);
 }
 
 export default function PromedioSimpleScreen() {
-  const colors = Colors.dark;
-  const [notas, setNotas] = useState<Nota[]>(() => [nuevaNota(), nuevaNota(), nuevaNota()]);
-  const [mostrarExplicacion, setMostrarExplicacion] = useState(false);
+  const [notas, setNotas] = useState<Nota[]>(notasIniciales);
+  const [calculado, setCalculado] = useState(false);
+  const [guardado, setGuardado] = useState(false);
+
+  const scrollRef = useRef<ScrollView>(null);
+  const resultadoY = useRef(0);
+
+  useEffect(() => {
+    setGuardado(false);
+  }, [notas]);
 
   const calculo = useMemo(() => {
-    const numeros = notas
-      .map((n) => parseFloat(n.valor.replace(',', '.')))
-      .filter((n) => Number.isFinite(n) && n > 0);
+    const validas = notas.map((n) => aNumero(n.valor)).filter(notaValida);
+    if (validas.length === 0) return null;
 
-    if (numeros.length === 0) {
-      return { promedio: null, suma: 0, cantidad: 0 };
-    }
-
-    const suma = numeros.reduce((acc, v) => acc + v, 0);
+    const suma = validas.reduce((acc, v) => acc + v, 0);
     return {
-      promedio: suma / numeros.length,
+      validas,
       suma,
-      cantidad: numeros.length,
+      cantidad: validas.length,
+      promedio: suma / validas.length,
+      maxima: Math.max(...validas),
+      minima: Math.min(...validas),
     };
   }, [notas]);
 
-  const actualizarNota = (id: string, valor: string) => {
+  const actualizar = (id: string, valor: string) => {
     setNotas((prev) => prev.map((n) => (n.id === id ? { ...n, valor } : n)));
   };
 
-  const agregarNota = () => {
+  const agregar = () => {
     setNotas((prev) => [...prev, nuevaNota()]);
   };
 
-  const quitarNota = (id: string) => {
-    if (notas.length <= 1) return;
-    setNotas((prev) => prev.filter((n) => n.id !== id));
+  const eliminar = (id: string) => {
+    setNotas((prev) => (prev.length <= 1 ? prev : prev.filter((n) => n.id !== id)));
   };
 
-  const reiniciar = () => {
-    setNotas([nuevaNota(), nuevaNota(), nuevaNota()]);
+  const limpiar = () => {
+    setNotas(notasIniciales());
+    setCalculado(false);
+    scrollRef.current?.scrollTo({ y: 0, animated: true });
   };
 
-  const estaAprobando = calculo.promedio !== null && calculo.promedio >= 4.0;
+  const cargarEjemplo = () => {
+    setNotas(['5.5', '6.2', '4.8', '6.5'].map((v) => nuevaNota(v)));
+    setCalculado(false);
+  };
+
+  const calcular = () => {
+    setCalculado(true);
+    setTimeout(() => {
+      scrollRef.current?.scrollTo({ y: Math.max(resultadoY.current - Spacing.three, 0), animated: true });
+    }, 80);
+  };
+
+  const guardar = async () => {
+    if (!calculo) return;
+    await guardarEnHistorial({
+      calculadoraId: CALC_ID,
+      resultado: calculo.promedio.toFixed(2),
+      resumen: `${calculo.cantidad} ${calculo.cantidad === 1 ? 'nota' : 'notas'}`,
+    });
+    setGuardado(true);
+  };
+
+  const mostrarResultado = calculado && calculo !== null;
+  const aprobado = calculo !== null && calculo.promedio >= 4;
+  // Redondeo chileno a un decimal (3.95 → 4.0); el epsilon evita errores de coma flotante
+  const redondeado = calculo ? (Math.round(calculo.promedio * 10 + 1e-9) / 10).toFixed(1) : '';
 
   return (
-    <ThemedView style={[styles.container, { backgroundColor: colors.background }]}>
-      <Stack.Screen
-        options={{
-          headerShown: true,
-          title: 'Promedio Simple',
-          headerStyle: { backgroundColor: colors.surface },
-          headerTintColor: colors.text,
-          headerShadowVisible: false,
-          headerLeft: () => (
-            <Pressable
-              onPress={() => router.back()}
-              hitSlop={8}
-              style={styles.headerButton}>
-              <Ionicons name="arrow-back" size={22} color={colors.text} />
-            </Pressable>
-          ),
-          headerRight: () => (
-            <Pressable
-              onPress={reiniciar}
-              hitSlop={8}
-              style={styles.headerButton}>
-              <Ionicons name="refresh" size={19} color={colors.textSecondary} />
-            </Pressable>
-          ),
-        }}
-      />
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <HeaderCalculadora calculadoraId={CALC_ID} />
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <SafeAreaView style={{ flex: 1 }} edges={['bottom']}>
-          <ScrollView
-            contentContainerStyle={styles.scrollContent}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}>
+        <ScrollView
+          ref={scrollRef}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}>
 
-            {/* TARJETA DE RESULTADO PRINCIPAL (DISPLAY CARD) */}
-            <View
-              style={[
-                styles.displayCard,
-                {
-                  backgroundColor: colors.surface,
-                  borderColor: colors.border,
-                },
-              ]}>
-              <View style={styles.displayTopRow}>
-                <Text style={[styles.displayLabel, { color: colors.textMuted }]}>
-                  PROMEDIO GENERAL
-                </Text>
+          <AvisoInfo>
+            Todas las notas valen lo mismo. Si tus evaluaciones tienen distinto porcentaje, usa
+            Promedio Ponderado.
+          </AvisoInfo>
 
-                {calculo.promedio !== null ? (
-                  <View
-                    style={[
-                      styles.statusBadge,
-                      {
-                        backgroundColor: estaAprobando ? colors.successBg : colors.dangerBg,
-                      },
-                    ]}>
-                    {estaAprobando ? (
-                      <Ionicons name="checkmark-circle" size={12} color={colors.success} />
-                    ) : (
-                      <Ionicons name="alert-circle" size={12} color={colors.danger} />
-                    )}
-                    <Text
-                      style={[
-                        styles.statusBadgeText,
-                        { color: estaAprobando ? colors.success : colors.danger },
-                      ]}>
-                      {estaAprobando ? 'Aprobado' : 'Bajo 4.0'}
-                    </Text>
-                  </View>
-                ) : (
-                  <View style={[styles.statusBadge, { backgroundColor: colors.backgroundElement }]}>
-                    <Text style={[styles.statusBadgeText, { color: colors.textMuted }]}>
-                      Sin notas
-                    </Text>
-                  </View>
-                )}
-              </View>
-
-              {/* Métrica Display */}
-              <View style={styles.metricContainer}>
-                <Text
-                  style={[
-                    styles.metricText,
-                    {
-                      color:
-                        calculo.promedio === null
-                          ? colors.textMuted
-                          : estaAprobando
-                          ? colors.navy
-                          : colors.danger,
-                    },
-                  ]}>
-                  {calculo.promedio === null ? '—' : calculo.promedio.toFixed(2)}
-                </Text>
-              </View>
-
-              {/* Sub-métricas */}
-              <View style={[styles.subMetricsGrid, { borderTopColor: colors.border }]}>
-                <View style={styles.subMetricCol}>
-                  <Text style={[styles.subMetricLabel, { color: colors.textMuted }]}>
-                    Suma total
-                  </Text>
-                  <Text style={[styles.subMetricValue, { color: colors.text }]}>
-                    {calculo.suma.toFixed(1)}
-                  </Text>
-                </View>
-
-                <View style={[styles.subMetricDivider, { backgroundColor: colors.border }]} />
-
-                <View style={styles.subMetricCol}>
-                  <Text style={[styles.subMetricLabel, { color: colors.textMuted }]}>
-                    Notas sumadas
-                  </Text>
-                  <Text style={[styles.subMetricValue, { color: colors.text }]}>
-                    {calculo.cantidad} de {notas.length}
-                  </Text>
-                </View>
-              </View>
-            </View>
-
-            {/* SECCIÓN DE NOTAS */}
-            <View style={styles.sectionHeaderRow}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Calificaciones</Text>
-              <Text style={[styles.sectionCount, { color: colors.textMuted }]}>
-                {notas.length} notas
+          {/* NOTAS */}
+          <Seccion
+            titulo="Notas"
+            accion={<BotonPildora label="Ejemplo" icono="school-outline" onPress={cargarEjemplo} />}>
+            <View style={styles.encabezados}>
+              <Text style={[styles.encabezado, styles.colNota, { color: colors.textMuted }]}>
+                NOTA (1.0 – 7.0)
               </Text>
+              <View style={styles.colAccion} />
             </View>
 
-            {/* LISTA DINÁMICA DE NOTAS */}
-            <View style={styles.filasContainer}>
-              {notas.map((nota, index) => {
-                const esUltimaUnica = notas.length <= 1;
-                return (
-                  <View
-                    key={nota.id}
-                    style={[
-                      styles.filaCard,
-                      {
-                        backgroundColor: colors.surface,
-                        borderColor: colors.border,
-                      },
-                    ]}>
-                    <View style={styles.badgeIndex}>
-                      <Text style={[styles.badgeIndexText, { color: colors.textMuted }]}>
-                        {index + 1}
-                      </Text>
+            {notas.map((nota, index) => {
+              const fueraDeRango = nota.valor.trim() !== '' && !notaValida(aNumero(nota.valor));
+              const unica = notas.length <= 1;
+
+              return (
+                <View key={nota.id} style={styles.fila}>
+                  <View style={styles.filaLinea}>
+                    <View style={styles.numero}>
+                      <Text style={styles.numeroTexto}>{index + 1}</Text>
                     </View>
 
                     <TextInput
                       value={nota.valor}
-                      onChangeText={(txt) => actualizarNota(nota.id, txt)}
-                      placeholder="Nota (ej. 5.5)"
+                      onChangeText={(t) => actualizar(nota.id, t)}
+                      placeholder="Ej: 5.5"
                       placeholderTextColor={colors.textMuted}
                       keyboardType="decimal-pad"
+                      maxLength={4}
                       style={[
-                        styles.inputField,
+                        styles.input,
+                        styles.colNota,
                         {
                           color: colors.text,
-                          backgroundColor: colors.backgroundElement,
-                          borderColor: colors.border,
+                          borderColor: fueraDeRango ? colors.danger : colors.border,
                         },
                       ]}
                     />
 
                     <Pressable
-                      disabled={esUltimaUnica}
-                      onPress={() => quitarNota(nota.id)}
+                      disabled={unica}
+                      onPress={() => eliminar(nota.id)}
                       hitSlop={6}
+                      accessibilityLabel="Eliminar nota"
                       style={({ pressed }) => [
-                        styles.deleteButton,
-                        {
-                          opacity: esUltimaUnica ? 0.3 : pressed ? 0.7 : 1,
-                          backgroundColor: colors.backgroundElement,
-                        },
+                        styles.colAccion,
+                        styles.eliminar,
+                        { opacity: unica ? 0.3 : pressed ? 0.6 : 1 },
                       ]}>
-                      <Ionicons name="trash-outline" size={18} color={esUltimaUnica ? colors.textMuted : colors.danger} />
+                      <Ionicons name="trash-outline" size={20} color={Acento.claro} />
                     </Pressable>
                   </View>
-                );
-              })}
-            </View>
 
-            {/* BOTÓN AGREGAR NOTA */}
-            <Pressable
-              onPress={agregarNota}
-              style={({ pressed }) => [
-                styles.addNoteButton,
-                {
-                  backgroundColor: colors.surface,
-                  borderColor: colors.border,
-                  opacity: pressed ? 0.85 : 1,
-                },
-              ]}>
-              <Ionicons name="add" size={18} color={colors.primary} />
-              <Text style={[styles.addNoteText, { color: colors.primary }]}>
-                Agregar otra nota
-              </Text>
-            </Pressable>
-
-            {/* BLOQUE PEDAGÓGICO COLAPSABLE */}
-            <View
-              style={[
-                styles.pedagogicCard,
-                {
-                  backgroundColor: colors.surface,
-                  borderColor: colors.border,
-                },
-              ]}>
-              <Pressable
-                onPress={() => setMostrarExplicacion((prev) => !prev)}
-                style={styles.pedagogicHeader}>
-                <View style={styles.pedagogicHeaderLeft}>
-                  <Ionicons name="help-circle" size={18} color={colors.accentTip} />
-                  <Text style={[styles.pedagogicTitle, { color: colors.text }]}>
-                    ¿Cómo funciona el promedio simple?
-                  </Text>
-                </View>
-                {mostrarExplicacion ? (
-                  <Ionicons name="chevron-up" size={18} color={colors.textMuted} />
-                ) : (
-                  <Ionicons name="chevron-down" size={18} color={colors.textMuted} />
-                )}
-              </Pressable>
-
-              {mostrarExplicacion && (
-                <View style={styles.pedagogicContent}>
-                  <Text style={[styles.pedagogicText, { color: colors.textSecondary }]}>
-                    El promedio simple o media aritmética suma todas las calificaciones y divide el total
-                    por la cantidad de notas ingresadas. Cada evaluación tiene exactamente el mismo valor.
-                  </Text>
-
-                  <View
-                    style={[
-                      styles.formulaBox,
-                      { backgroundColor: colors.backgroundElement, borderColor: colors.border },
-                    ]}>
-                    <Text style={[styles.formulaLabel, { color: colors.textMuted }]}>FÓRMULA</Text>
-                    <Text style={[styles.formulaMath, { color: colors.text }]}>
-                      Promedio = Suma de Notas ÷ Cantidad de Notas
+                  {fueraDeRango && (
+                    <Text style={[styles.errorTexto, { color: colors.danger }]}>
+                      La nota debe estar entre 1.0 y 7.0
                     </Text>
-                  </View>
-
-                  <View
-                    style={[
-                      styles.pedagogicTipBox,
-                      {
-                        backgroundColor: colors.accentTipBg,
-                        borderColor: colors.accentTip,
-                      },
-                    ]}>
-                    <View style={styles.pedagogicTipHeader}>
-                      <Ionicons name="bulb" size={16} color={colors.accentTip} />
-                      <Text style={[styles.pedagogicTipTitle, { color: colors.accentTip }]}>
-                        Tip rápido
-                      </Text>
-                    </View>
-                    <Text style={[styles.pedagogicTipBody, { color: colors.textSecondary }]}>
-                      Si tus pruebas tienen porcentajes distintos (por ejemplo una prueba vale 40% y un
-                      trabajo 20%), debes utilizar la calculadora de Promedio Ponderado.
-                    </Text>
-                  </View>
+                  )}
                 </View>
-              )}
-            </View>
+              );
+            })}
 
-          </ScrollView>
-        </SafeAreaView>
+            <BotonAgregar label="Agregar nota" onPress={agregar} />
+          </Seccion>
+
+          <BotonPrimario
+            label="Calcular promedio"
+            icono="calculator-outline"
+            onPress={calcular}
+            deshabilitado={calculo === null}
+          />
+
+          {/* RESULTADO */}
+          {mostrarResultado && calculo && (
+            <TarjetaResultado
+              titulo="Tu promedio es"
+              valor={calculo.promedio.toFixed(2)}
+              tono={aprobado ? 'ok' : 'error'}
+              badge={aprobado ? 'Aprobado' : 'Bajo 4.0'}
+              descripcion={`Redondeado a un decimal: ${redondeado}`}
+              onLayout={(e) => {
+                resultadoY.current = e.nativeEvent.layout.y;
+              }}>
+              <DetalleCalculo
+                filas={[
+                  {
+                    key: 'suma',
+                    label: 'Suma de las notas',
+                    operacion: calculo.validas.map(fmtNota).join(' + '),
+                    valor: fmtNota(calculo.suma),
+                  },
+                  {
+                    key: 'division',
+                    label: `Dividido por ${calculo.cantidad} ${calculo.cantidad === 1 ? 'nota' : 'notas'}`,
+                    operacion: `${fmtNota(calculo.suma)} ÷ ${calculo.cantidad}`,
+                    valor: calculo.promedio.toFixed(2),
+                  },
+                  {
+                    key: 'extremos',
+                    label: 'Nota más alta / más baja',
+                    valor: `${fmtNota(calculo.maxima)} / ${fmtNota(calculo.minima)}`,
+                  },
+                ]}
+                total={{ label: 'Promedio final', valor: calculo.promedio.toFixed(2) }}
+                tonoTotal={aprobado ? 'ok' : 'error'}
+              />
+            </TarjetaResultado>
+          )}
+
+          <ExplicacionPlegable
+            titulo="¿Cómo se calcula el promedio simple?"
+            texto="Se suman todas las notas y el total se divide por la cantidad de notas. Cada evaluación tiene exactamente el mismo valor."
+            formula="Promedio = Suma de notas ÷ Cantidad de notas"
+            tip="En Chile las notas se redondean a un decimal: 3.95 sube a 4.0, pero 3.94 queda en 3.9. Revisa siempre la regla de tu colegio."
+          />
+        </ScrollView>
+
+        <BarraAcciones
+          onLimpiar={limpiar}
+          onGuardar={guardar}
+          guardarDeshabilitado={!mostrarResultado}
+          guardado={guardado}
+        />
       </KeyboardAvoidingView>
-    </ThemedView>
+    </View>
   );
 }
 
@@ -346,208 +283,71 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  headerButton: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   scrollContent: {
-    padding: Spacing.four,
-    gap: Spacing.four,
+    paddingHorizontal: Spacing.three,
+    paddingBottom: Spacing.four,
+    gap: Spacing.three,
   },
-  displayCard: {
-    borderRadius: 20,
-    padding: Spacing.four,
-    borderWidth: 1,
-    shadowColor: '#0f172a',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 2,
-  },
-  displayTopRow: {
+  encabezados: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: GAP,
+    paddingLeft: ANCHO_NUMERO + GAP,
+    marginBottom: -6,
   },
-  displayLabel: {
+  encabezado: {
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 0.6,
+    textAlign: 'center',
   },
-  statusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 999,
-  },
-  statusBadgeText: {
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  metricContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: Spacing.three,
-  },
-  metricText: {
-    fontSize: 54,
-    fontWeight: '900',
-    letterSpacing: -1.5,
-  },
-  subMetricsGrid: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingTop: Spacing.three,
-    borderTopWidth: 1,
-  },
-  subMetricCol: {
-    flex: 1,
-    alignItems: 'center',
-    gap: 2,
-  },
-  subMetricLabel: {
-    fontSize: 11,
-    fontWeight: '500',
-  },
-  subMetricValue: {
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  subMetricDivider: {
-    width: 1,
-    height: 28,
-  },
-  sectionHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: Spacing.two,
-  },
-  sectionTitle: {
-    fontSize: 17,
-    fontWeight: '800',
-    letterSpacing: -0.3,
-  },
-  sectionCount: {
-    fontSize: 12,
-  },
-  filasContainer: {
-    gap: 10,
-  },
-  filaCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    padding: 10,
-    borderRadius: 14,
-    borderWidth: 1,
-  },
-  badgeIndex: {
-    width: 28,
-    alignItems: 'center',
-  },
-  badgeIndexText: {
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  inputField: {
-    flex: 1,
-    height: 48,
-    borderRadius: 10,
-    borderWidth: 1,
-    paddingHorizontal: 14,
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  deleteButton: {
-    width: 44,
-    height: 48,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  addNoteButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    height: 50,
-    borderRadius: 14,
-    borderWidth: 1.5,
-    borderStyle: 'dashed',
-  },
-  addNoteText: {
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  pedagogicCard: {
-    borderRadius: 16,
-    borderWidth: 1,
-    padding: Spacing.three,
-    marginTop: Spacing.two,
-    gap: Spacing.three,
-  },
-  pedagogicHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  pedagogicHeaderLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  colNota: {
     flex: 1,
   },
-  pedagogicTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    flex: 1,
+  colAccion: {
+    width: ANCHO_ACCION,
   },
-  pedagogicContent: {
-    gap: Spacing.three,
-    paddingTop: Spacing.two,
-  },
-  pedagogicText: {
-    fontSize: 13,
-    lineHeight: 19,
-  },
-  formulaBox: {
-    padding: Spacing.three,
-    borderRadius: 10,
-    borderWidth: 1,
-    alignItems: 'center',
-    gap: 4,
-  },
-  formulaLabel: {
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-  },
-  formulaMath: {
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  pedagogicTipBox: {
-    padding: Spacing.three,
-    borderRadius: 12,
-    borderLeftWidth: 4,
-    gap: 4,
-  },
-  pedagogicTipHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  fila: {
     gap: 6,
   },
-  pedagogicTipTitle: {
-    fontSize: 12,
-    fontWeight: '700',
+  filaLinea: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: GAP,
   },
-  pedagogicTipBody: {
+  numero: {
+    width: ANCHO_NUMERO,
+    height: ALTO_INPUT,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Acento.borde,
+    backgroundColor: Acento.fondo,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  numeroTexto: {
+    color: Acento.claro,
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  input: {
+    height: ALTO_INPUT,
+    borderRadius: 12,
+    borderWidth: 1,
+    backgroundColor: 'rgba(15,23,42,0.6)',
+    paddingHorizontal: 12,
+    fontSize: 18,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  eliminar: {
+    height: ALTO_INPUT,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  errorTexto: {
+    marginLeft: ANCHO_NUMERO + GAP,
     fontSize: 12,
-    lineHeight: 17,
+    fontWeight: '600',
   },
 });
