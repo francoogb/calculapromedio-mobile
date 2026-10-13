@@ -32,6 +32,14 @@ export const Colors = {
     warning: '#f59e0b',
     warningBg: '#fef3c7',
 
+    // Resultado aprobado (teal) y aviso informativo (azul)
+    resultado: '#0d9488',
+    resultadoBg: '#ccfbf1',
+    resultadoBorder: '#5eead4',
+    info: '#2563eb',
+    infoBg: '#eff6ff',
+    infoBorder: '#bfdbfe',
+
     // Compatibilidad
     backgroundElement: '#f8fafc',
     backgroundSelected: '#e2e8f0',
@@ -60,6 +68,13 @@ export const Colors = {
     dangerBg: '#7f1d1d',
     warning: '#fbbf24',
     warningBg: '#78350f',
+
+    resultado: '#5eead4',
+    resultadoBg: 'rgba(20,184,166,0.12)',
+    resultadoBorder: 'rgba(45,212,191,0.30)',
+    info: '#93c5fd',
+    infoBg: 'rgba(59,130,246,0.10)',
+    infoBorder: 'rgba(96,165,250,0.30)',
 
     backgroundElement: '#1e293b',
     backgroundSelected: '#334155',
