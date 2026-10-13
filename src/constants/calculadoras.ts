@@ -1,7 +1,7 @@
 import type Ionicons from '@expo/vector-icons/Ionicons';
 import type { Href } from 'expo-router';
 
-export type CategoriaCalculadora = 'escolares' | 'paes' | 'universitarias';
+export type CategoriaCalculadora = 'escolares' | 'paes' | 'universitarias' | 'finanzas' | 'salud' | 'utilidades';
 
 export type Calculadora = {
   id: string;
@@ -209,6 +209,76 @@ export const CALCULADORAS: Calculadora[] = [
     colorIcon: '#6d28d9',
   },
   {
+    id: 'area-perimetro',
+    nombre: 'Áreas y Perímetros',
+    descripcion: 'Círculo, triángulo, cuadriláteros, trapecio y rombo',
+    categoria: 'paes',
+    ruta: '/calculadoras/area-perimetro',
+    icono: 'shapes-outline',
+    colorBg: '#ffedd5',
+    colorIcon: '#ea580c',
+  },
+  {
+    id: 'volumen',
+    nombre: 'Volúmenes y Cuerpos',
+    descripcion: 'Volumen y área de cubo, prisma, cilindro, cono, esfera y pirámide',
+    categoria: 'paes',
+    ruta: '/calculadoras/volumen',
+    icono: 'cube-outline',
+    colorBg: '#e0e7ff',
+    colorIcon: '#4f46e5',
+  },
+  {
+    id: 'trigonometria',
+    nombre: 'Trigonometría',
+    descripcion: 'Resuelve triángulos rectángulos y calcula seno, coseno y tangente',
+    categoria: 'paes',
+    ruta: '/calculadoras/trigonometria',
+    icono: 'compass-outline',
+    colorBg: '#fae8ff',
+    colorIcon: '#c026d3',
+  },
+  {
+    id: 'sistemas-ecuaciones',
+    nombre: 'Sistemas de Ecuaciones',
+    descripcion: 'Resuelve sistemas 2×2 por Cramer con comprobación',
+    categoria: 'paes',
+    ruta: '/calculadoras/sistemas-ecuaciones',
+    icono: 'git-merge-outline',
+    colorBg: '#dcfce7',
+    colorIcon: '#15803d',
+  },
+  {
+    id: 'funcion-lineal',
+    nombre: 'Función Lineal',
+    descripcion: 'Pendiente, cortes con los ejes y comparación de dos rectas',
+    categoria: 'paes',
+    ruta: '/calculadoras/funcion-lineal',
+    icono: 'trending-up-outline',
+    colorBg: '#cffafe',
+    colorIcon: '#0e7490',
+  },
+  {
+    id: 'conjuntos',
+    nombre: 'Conjuntos',
+    descripcion: 'Unión, intersección, diferencias y diagrama de Venn',
+    categoria: 'paes',
+    ruta: '/calculadoras/conjuntos',
+    icono: 'ellipse-outline',
+    colorBg: '#fce7f3',
+    colorIcon: '#be185d',
+  },
+  {
+    id: 'determinante',
+    nombre: 'Determinantes',
+    descripcion: 'Determinante de matrices 2×2 y 3×3 con regla de Sarrus',
+    categoria: 'universitarias',
+    ruta: '/calculadoras/determinante',
+    icono: 'apps-outline',
+    colorBg: '#f1f5f9',
+    colorIcon: '#475569',
+  },
+  {
     id: 'ranking',
     nombre: 'Puntaje Ranking',
     descripcion: 'Conversión oficial a puntaje de ranking DEMRE',
@@ -249,4 +319,11 @@ export const ESTILO_CARD: Record<
   'puntaje-paes': { icono: 'ribbon', color: '#8b5cf6' },
   'simulador-postulacion': { icono: 'sparkles', color: '#7c3aed' },
   ranking: { icono: 'trophy', color: '#f59e0b' },
+  'area-perimetro': { icono: 'shapes', color: '#f97316' },
+  volumen: { icono: 'cube', color: '#6366f1' },
+  trigonometria: { icono: 'compass', color: '#d946ef' },
+  'sistemas-ecuaciones': { icono: 'git-merge', color: '#22c55e' },
+  'funcion-lineal': { icono: 'stats-chart', color: '#06b6d4' },
+  conjuntos: { icono: 'ellipse', color: '#ec4899' },
+  determinante: { icono: 'apps', color: '#64748b' },
 };
