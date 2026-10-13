@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { router, type Href } from 'expo-router';
+import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import {
   Pressable,
@@ -12,56 +12,13 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { getCalculadora, type Calculadora } from '@/constants/calculadoras';
 import { Colors, Spacing } from '@/constants/theme';
 
-type CalculadoraPrincipal = {
-  id: string;
-  nombre: string;
-  descripcion: string;
-  ruta: Href | null;
-  icono: keyof typeof Ionicons.glyphMap;
-  colorBg: string;
-  colorIcon: string;
-};
-
-const PRINCIPALES: CalculadoraPrincipal[] = [
-  {
-    id: 'promedio-ponderado',
-    nombre: 'Promedio Ponderado',
-    descripcion: 'Calcula tu nota final considerando el peso de cada evaluación.',
-    ruta: '/calculadoras/promedio-ponderado',
-    icono: 'calculator-outline',
-    colorBg: '#fee2e2',
-    colorIcon: '#dc2626',
-  },
-  {
-    id: 'nota-necesaria',
-    nombre: 'Nota Necesaria',
-    descripcion: 'Averigua la nota que necesitas para alcanzar tu objetivo.',
-    ruta: '/calculadoras/nota-minima',
-    icono: 'flash-outline',
-    colorBg: '#dbeafe',
-    colorIcon: '#2563eb',
-  },
-  {
-    id: 'nem-paes',
-    nombre: 'NEM y Puntaje PAES',
-    descripcion: 'Estima tu puntaje NEM y tu puntaje ponderado.',
-    ruta: '/calculadoras/nem',
-    icono: 'school-outline',
-    colorBg: '#ede9fe',
-    colorIcon: '#7c3aed',
-  },
-  {
-    id: 'porcentajes',
-    nombre: 'Porcentajes',
-    descripcion: 'Calcula descuentos, aumentos y operaciones con porcentajes.',
-    ruta: '/calculadoras/porcentajes',
-    icono: 'pie-chart-outline',
-    colorBg: '#dcfce7',
-    colorIcon: '#16a34a',
-  },
-];
+/** Calculadoras destacadas en el home (íconos y colores vienen del catálogo único). */
+const PRINCIPALES: Calculadora[] = ['promedio-ponderado', 'nota-minima', 'nem', 'porcentajes']
+  .map(getCalculadora)
+  .filter((c): c is Calculadora => c !== undefined);
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
