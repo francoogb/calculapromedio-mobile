@@ -4,7 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { getCalculadora } from '@/constants/calculadoras';
+import { ESTILO_CARD, getCalculadora } from '@/constants/calculadoras';
 import { Acento, Colors, Spacing } from '@/constants/theme';
 import { useFavorito } from '@/hooks/use-favorito';
 
@@ -17,6 +17,8 @@ export function HeaderCalculadora({ calculadoraId }: Props) {
   const colors = Colors.dark;
   const insets = useSafeAreaInsets();
   const calc = getCalculadora(calculadoraId);
+  // Mismo ícono que en el home y el listado (el color sí es el acento único)
+  const icono = ESTILO_CARD[calculadoraId]?.icono ?? calc?.icono;
   const { esFavorito, alternar } = useFavorito(calculadoraId);
 
   return (
@@ -32,9 +34,9 @@ export function HeaderCalculadora({ calculadoraId }: Props) {
         <Ionicons name="arrow-back" size={24} color={colors.text} />
       </Pressable>
 
-      {calc && (
+      {icono && (
         <View style={[styles.tile, { backgroundColor: Acento.base }]}>
-          <Ionicons name={calc.icono} size={26} color="#ffffff" />
+          <Ionicons name={icono} size={26} color="#ffffff" />
         </View>
       )}
 

@@ -5,7 +5,7 @@ import { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { CALCULADORAS, getCalculadora } from '@/constants/calculadoras';
+import { CALCULADORAS, ESTILO_CARD, getCalculadora } from '@/constants/calculadoras';
 import { Colors, Spacing } from '@/constants/theme';
 import {
   borrarDelHistorial,
@@ -88,8 +88,8 @@ export default function FavoritosScreen() {
                       opacity: pressed ? 0.9 : 1,
                     },
                   ]}>
-                  <View style={[styles.cardIcono, { backgroundColor: calc.colorIcon }]}>
-                    <Ionicons name={calc.icono} size={22} color="#ffffff" />
+                  <View style={[styles.cardIcono, { backgroundColor: ESTILO_CARD[calc.id]?.color ?? calc.colorIcon }]}>
+                    <Ionicons name={ESTILO_CARD[calc.id]?.icono ?? calc.icono} size={22} color="#ffffff" />
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.cardTitulo, { color: colors.text }]}>{calc.nombre}</Text>
