@@ -21,6 +21,7 @@ import {
   ExplicacionPlegable,
   Seccion,
 } from '@/components/calculadora/piezas';
+import { DetalleCalculo, TarjetaResultado } from '@/components/calculadora/resultado';
 import { Colors, Spacing } from '@/constants/theme';
 import { guardarEnHistorial } from '@/lib/storage';
 
@@ -285,99 +286,38 @@ export default function PromedioPonderadoScreen() {
 
           {/* RESULTADO */}
           {mostrarResultado && calculo.promedio !== null && (
-            <View
+            <TarjetaResultado
+              titulo="Tu promedio final es"
+              valor={calculo.promedio.toFixed(2)}
+              tono={aprobado ? 'ok' : 'error'}
+              badge={aprobado ? 'Aprobado' : 'Bajo 4.0'}
               onLayout={(e) => {
                 resultadoY.current = e.nativeEvent.layout.y;
-              }}
-              style={[styles.resultado, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-              <View style={styles.resultadoHeader}>
-                <Text style={[styles.resultadoTitulo, { color: colors.text }]}>
-                  Tu promedio final es
-                </Text>
-                <View
-                  style={[
-                    styles.badge,
-                    {
-                      backgroundColor: aprobado ? colors.resultadoBg : colors.dangerBg,
-                      borderColor: aprobado ? colors.resultadoBorder : colors.danger,
-                    },
-                  ]}>
-                  <Ionicons
-                    name={aprobado ? 'checkmark-circle' : 'alert-circle'}
-                    size={16}
-                    color={aprobado ? colors.resultado : '#fca5a5'}
-                  />
-                  <Text
-                    style={[styles.badgeTexto, { color: aprobado ? colors.resultado : '#fca5a5' }]}>
-                    {aprobado ? 'Aprobado' : 'Bajo 4.0'}
-                  </Text>
-                </View>
-              </View>
-
-              <View
-                style={[
-                  styles.valorBox,
-                  {
-                    backgroundColor: aprobado ? colors.resultadoBg : 'rgba(239,68,68,0.12)',
-                    borderColor: aprobado ? colors.resultadoBorder : 'rgba(239,68,68,0.35)',
-                  },
-                ]}>
-                <Text style={[styles.valor, { color: aprobado ? colors.resultado : '#f87171' }]}>
-                  {calculo.promedio.toFixed(2)}
-                </Text>
-              </View>
-
-              <Text style={[styles.detalleTitulo, { color: colors.text }]}>Detalle del cálculo</Text>
-
-              <View style={[styles.detalle, { borderColor: colors.border }]}>
-                {calculo.detalle.map((d, i) => (
-                  <View
-                    key={d.id}
-                    style={[
-                      styles.detalleFila,
-                      i > 0 && { borderTopWidth: 1, borderTopColor: colors.border },
-                    ]}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.detalleNombre, { color: colors.text }]} numberOfLines={1}>
-                        {d.nombre}
-                      </Text>
-                      <Text style={[styles.detalleOperacion, { color: colors.textMuted }]}>
-                        {d.nota.toFixed(1)} × {formatearPct(d.pct)}%
-                      </Text>
-                    </View>
-                    <Text style={[styles.detalleAporte, { color: colors.text }]}>
-                      {d.aporte.toFixed(2)}
-                    </Text>
-                  </View>
-                ))}
-
-                {calculo.normalizado && (
-                  <View
-                    style={[styles.detalleFila, { borderTopWidth: 1, borderTopColor: colors.border }]}>
-                    <Text style={[styles.detalleOperacion, { color: colors.warning, flex: 1 }]}>
-                      Suma {calculo.sumaAportes.toFixed(2)} ÷ {formatearPct(calculo.pesoValido)}%
-                      (pesos no suman 100%)
-                    </Text>
-                  </View>
-                )}
-
-                <View
-                  style={[
-                    styles.detalleFila,
-                    styles.detalleTotal,
-                    { borderTopColor: colors.border },
-                  ]}>
-                  <Text style={styles.detalleTotalLabel}>Promedio final</Text>
-                  <Text
-                    style={[
-                      styles.detalleTotalValor,
-                      { color: aprobado ? colors.resultado : '#f87171' },
-                    ]}>
-                    {calculo.promedio.toFixed(2)}
-                  </Text>
-                </View>
-              </View>
-            </View>
+              }}>
+              <DetalleCalculo
+                filas={[
+                  ...calculo.detalle.map((d) => ({
+                    key: d.id,
+                    label: d.nombre,
+                    operacion: `${d.nota.toFixed(1)} × ${formatearPct(d.pct)}%`,
+                    valor: d.aporte.toFixed(2),
+                  })),
+                  ...(calculo.normalizado
+                    ? [
+                        {
+                          key: 'normalizado',
+                          label: 'Los pesos no suman 100%',
+                          operacion: `${calculo.sumaAportes.toFixed(2)} ÷ ${formatearPct(calculo.pesoValido)}%`,
+                          valor: calculo.promedio.toFixed(2),
+                          tono: 'warning' as const,
+                        },
+                      ]
+                    : []),
+                ]}
+                total={{ label: 'Promedio final', valor: calculo.promedio.toFixed(2) }}
+                tonoTotal={aprobado ? 'ok' : 'error'}
+              />
+            </TarjetaResultado>
           )}
 
           <ExplicacionPlegable
@@ -568,88 +508,4 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
   },
 
-  // Resultado
-  resultado: {
-    borderRadius: 20,
-    borderWidth: 1,
-    padding: Spacing.three,
-    gap: 14,
-  },
-  resultadoHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 8,
-  },
-  resultadoTitulo: {
-    fontSize: 18,
-    fontWeight: '800',
-    flexShrink: 1,
-  },
-  badge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 999,
-    borderWidth: 1,
-  },
-  badgeTexto: {
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  valorBox: {
-    alignItems: 'center',
-    paddingVertical: Spacing.three,
-    borderRadius: 14,
-    borderWidth: 1,
-  },
-  valor: {
-    fontSize: 64,
-    fontWeight: '900',
-    letterSpacing: -1,
-  },
-  detalleTitulo: {
-    fontSize: 15,
-    fontWeight: '800',
-  },
-  detalle: {
-    borderRadius: 14,
-    borderWidth: 1,
-    overflow: 'hidden',
-  },
-  detalleFila: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    gap: 10,
-  },
-  detalleNombre: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  detalleOperacion: {
-    fontSize: 12,
-    marginTop: 1,
-  },
-  detalleAporte: {
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  detalleTotal: {
-    borderTopWidth: 1,
-    backgroundColor: 'rgba(99,102,241,0.08)',
-  },
-  detalleTotalLabel: {
-    flex: 1,
-    color: '#7dd3fc',
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  detalleTotalValor: {
-    fontSize: 20,
-    fontWeight: '800',
-  },
 });
