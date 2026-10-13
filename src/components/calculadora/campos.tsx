@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { Acento, Colors } from '@/constants/theme';
 
@@ -18,6 +18,7 @@ export function CampoNumero({
   error,
   ayuda,
   maxLength = 6,
+  permiteNegativo = false,
 }: {
   label: string;
   value: string;
@@ -27,6 +28,8 @@ export function CampoNumero({
   error?: string | null;
   ayuda?: string;
   maxLength?: number;
+  /** Teclado con signo menos (los teclados decimales no lo traen) */
+  permiteNegativo?: boolean;
 }) {
   return (
     <View style={styles.campo}>
@@ -41,7 +44,7 @@ export function CampoNumero({
           onChangeText={onChangeText}
           placeholder={placeholder}
           placeholderTextColor={colors.textMuted}
-          keyboardType="decimal-pad"
+          keyboardType={permiteNegativo ? TECLADO_CON_SIGNO : 'decimal-pad'}
           maxLength={maxLength}
           style={[styles.input, { color: colors.text }]}
         />
@@ -208,3 +211,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 });
+
+/** Teclado numérico que incluye el signo menos en ambas plataformas. */
+export const TECLADO_CON_SIGNO = Platform.OS === 'ios' ? 'numbers-and-punctuation' : 'numeric';
