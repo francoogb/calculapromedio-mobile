@@ -1,6 +1,6 @@
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { Colors } from '@/constants/theme';
+import { Acento, Colors } from '@/constants/theme';
 
 const colors = Colors.dark;
 
@@ -82,12 +82,12 @@ export function ChipsRapidos({
             style={({ pressed }) => [
               styles.chip,
               {
-                backgroundColor: activo ? '#4f46e5' : 'rgba(99,102,241,0.08)',
-                borderColor: activo ? '#4f46e5' : 'rgba(129,140,248,0.25)',
+                backgroundColor: activo ? Acento.base : 'rgba(99,102,241,0.08)',
+                borderColor: activo ? Acento.base : 'rgba(129,140,248,0.25)',
                 opacity: pressed ? 0.8 : 1,
               },
             ]}>
-            <Text style={[styles.chipTexto, { color: activo ? '#ffffff' : '#a5b4fc' }]}>{op}</Text>
+            <Text style={[styles.chipTexto, { color: activo ? '#ffffff' : Acento.claro }]}>{op}</Text>
           </Pressable>
         );
       })}
@@ -118,7 +118,7 @@ export function Segmentado<T extends string>({
             <Pressable
               key={op.id}
               onPress={() => onCambiar(op.id)}
-              style={[styles.segmentoItem, activo && { backgroundColor: '#4f46e5' }]}>
+              style={[styles.segmentoItem, activo && { backgroundColor: Acento.base }]}>
               <Text
                 style={[
                   styles.segmentoTexto,

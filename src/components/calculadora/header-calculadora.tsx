@@ -5,7 +5,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getCalculadora } from '@/constants/calculadoras';
-import { Colors, Spacing } from '@/constants/theme';
+import { Acento, Colors, Spacing } from '@/constants/theme';
 import { useFavorito } from '@/hooks/use-favorito';
 
 type Props = {
@@ -33,7 +33,7 @@ export function HeaderCalculadora({ calculadoraId }: Props) {
       </Pressable>
 
       {calc && (
-        <View style={[styles.tile, { backgroundColor: calc.colorIcon }]}>
+        <View style={[styles.tile, { backgroundColor: Acento.base }]}>
           <Ionicons name={calc.icono} size={26} color="#ffffff" />
         </View>
       )}

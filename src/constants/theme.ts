@@ -124,3 +124,16 @@ export const Spacing = {
 
 export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
 export const MaxContentWidth = 800;
+
+/**
+ * Acento único dentro de las calculadoras.
+ * Regla: los colores por calculadora (catálogo) solo se usan FUERA (home, listado, favoritos).
+ * Dentro de una calculadora todo es indigo; solo los estados (ok/error/advertencia) llevan color propio.
+ */
+export const Acento = {
+  base: '#4f46e5',
+  claro: '#a5b4fc',
+  medio: '#818cf8',
+  fondo: 'rgba(99,102,241,0.16)',
+  borde: 'rgba(129,140,248,0.35)',
+} as const;

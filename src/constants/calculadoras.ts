@@ -12,7 +12,7 @@ export type Calculadora = {
   icono: keyof typeof Ionicons.glyphMap;
   /** Fondo pastel para tarjetas del listado */
   colorBg: string;
-  /** Color de acento: ícono en listado, fondo del ícono en el header */
+  /** Color de identidad: solo fuera de la calculadora (home, listado, favoritos) */
   colorIcon: string;
 };
 

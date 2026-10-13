@@ -22,20 +22,17 @@ import {
   Seccion,
 } from '@/components/calculadora/piezas';
 import { DetalleCalculo, TarjetaResultado } from '@/components/calculadora/resultado';
-import { Colors, Spacing } from '@/constants/theme';
+import { Acento, Colors, Spacing } from '@/constants/theme';
 import { guardarEnHistorial } from '@/lib/storage';
 
 const CALC_ID = 'promedio-ponderado';
 const colors = Colors.dark;
 
-/** Colores del número de cada evaluación (se repiten en ciclo). */
 // Medidas compartidas para que número, inputs y encabezados queden alineados
 const ANCHO_NUMERO = 44;
 const ANCHO_ACCION = 36;
 const ALTO_INPUT = 50;
 const GAP = 10;
-
-const COLORES_FILA = ['#9d174d', '#1d4ed8', '#5b21b6', '#0f766e', '#b45309'];
 
 type Fila = {
   id: string;
@@ -228,11 +225,7 @@ export default function PromedioPonderadoScreen() {
                   />
 
                   <View style={styles.filaLinea}>
-                    <View
-                      style={[
-                        styles.numero,
-                        { backgroundColor: COLORES_FILA[index % COLORES_FILA.length] },
-                      ]}>
+                    <View style={styles.numero}>
                       <Text style={styles.numeroTexto}>{index + 1}</Text>
                     </View>
 
@@ -469,11 +462,14 @@ const styles = StyleSheet.create({
     width: ANCHO_NUMERO,
     height: ALTO_INPUT,
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Acento.borde,
+    backgroundColor: Acento.fondo,
     alignItems: 'center',
     justifyContent: 'center',
   },
   numeroTexto: {
-    color: '#ffffff',
+    color: Acento.claro,
     fontSize: 18,
     fontWeight: '800',
   },

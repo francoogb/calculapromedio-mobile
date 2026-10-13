@@ -3,7 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { type ReactNode, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { Colors, Spacing } from '@/constants/theme';
+import { Acento, Colors, Spacing } from '@/constants/theme';
 
 const colors = Colors.dark;
 
@@ -100,7 +100,7 @@ export function BotonPrimario({
         { opacity: deshabilitado ? 0.45 : pressed ? 0.9 : 1 },
       ]}>
       <LinearGradient
-        colors={['#4f46e5', '#6366f1']}
+        colors={[Acento.base, '#6366f1']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
         style={styles.primario}>
@@ -195,7 +195,7 @@ export function BarraAcciones({
         onPress={onLimpiar}
         style={({ pressed }) => [styles.barraBoton, styles.barraSecundario, { opacity: pressed ? 0.8 : 1 }]}>
         <Ionicons name="refresh" size={20} color="#a5b4fc" />
-        <Text style={[styles.barraTexto, { color: '#a5b4fc' }]}>Limpiar</Text>
+        <Text style={[styles.barraTexto, { color: Acento.claro }]}>Limpiar</Text>
       </Pressable>
 
       <Pressable
@@ -204,8 +204,8 @@ export function BarraAcciones({
         style={({ pressed }) => [
           styles.barraBoton,
           {
-            backgroundColor: guardado ? colors.resultadoBg : '#4f46e5',
-            borderColor: guardado ? colors.resultadoBorder : '#4f46e5',
+            backgroundColor: guardado ? colors.resultadoBg : Acento.base,
+            borderColor: guardado ? colors.resultadoBorder : Acento.base,
             opacity: guardarDeshabilitado ? 0.45 : pressed ? 0.85 : 1,
           },
         ]}>
@@ -264,7 +264,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(99,102,241,0.12)',
   },
   pildoraTexto: {
-    color: '#a5b4fc',
+    color: Acento.claro,
     fontSize: 14,
     fontWeight: '700',
   },
@@ -280,14 +280,14 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(99,102,241,0.06)',
   },
   agregarTexto: {
-    color: '#818cf8',
+    color: Acento.medio,
     fontSize: 15,
     fontWeight: '700',
   },
   primarioWrap: {
     borderRadius: 18,
     overflow: 'hidden',
-    shadowColor: '#4f46e5',
+    shadowColor: Acento.base,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.35,
     shadowRadius: 16,
