@@ -1,290 +1,300 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { Stack, router } from 'expo-router';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Colors, Spacing } from '@/constants/theme';
+import { Segmentado } from '@/components/calculadora/campos';
+import { HeaderCalculadora } from '@/components/calculadora/header-calculadora';
+import {
+  AvisoInfo,
+  BarraAcciones,
+  BotonPildora,
+  BotonPrimario,
+  ExplicacionPlegable,
+  Seccion,
+} from '@/components/calculadora/piezas';
+import { DetalleCalculo, TarjetaResultado } from '@/components/calculadora/resultado';
+import { Acento, Colors, Spacing } from '@/constants/theme';
+import { guardarEnHistorial } from '@/lib/storage';
+
+const CALC_ID = 'regla-3';
+const colors = Colors.dark;
+
+// Medidas compartidas para alinear las dos filas de la proporción
+const ANCHO_CONECTOR = 44;
+const ALTO_INPUT = 52;
+const GAP = 10;
 
 type Tipo = 'directa' | 'inversa';
+
+const TIPOS: Record<Tipo, { aviso: string; ejemplo: [string, string, string]; formula: string; tip: string }> = {
+  directa: {
+    aviso: 'Directa: si una magnitud aumenta, la otra también. Ej: más kilos, más precio.',
+    ejemplo: ['3', '6000', '5'],
+    formula: 'X = (B × C) ÷ A',
+    tip: 'Si 3 kg cuestan $6.000, 5 kg cuestan (6.000 × 5) ÷ 3 = $10.000.',
+  },
+  inversa: {
+    aviso: 'Inversa: si una magnitud aumenta, la otra disminuye. Ej: más trabajadores, menos días.',
+    ejemplo: ['4', '6', '8'],
+    formula: 'X = (A × B) ÷ C',
+    tip: 'Si 4 obreros tardan 6 días, 8 obreros tardan (4 × 6) ÷ 8 = 3 días.',
+  },
+};
 
 function aNumero(txt: string): number {
   return parseFloat(txt.replace(',', '.'));
 }
 
-// Quita decimales innecesarios: 30.00 → 30, 12.50 → 12.5
-function formatear(n: number): string {
+// 10000 → "10.000", 2.5 → "2,5"
+function fmt(n: number): string {
   return parseFloat(n.toFixed(2)).toLocaleString('es-CL');
 }
 
 export default function ReglaDeTresScreen() {
-  const colors = Colors.dark;
   const [tipo, setTipo] = useState<Tipo>('directa');
   const [a, setA] = useState('');
   const [b, setB] = useState('');
   const [c, setC] = useState('');
-  const [mostrarExplicacion, setMostrarExplicacion] = useState(false);
+  const [calculado, setCalculado] = useState(false);
+  const [guardado, setGuardado] = useState(false);
 
-  const resultado = useMemo((): { x: number; desarrollo: string } | { error: string } | null => {
+  const scrollRef = useRef<ScrollView>(null);
+  const resultadoY = useRef(0);
+
+  const config = TIPOS[tipo];
+
+  useEffect(() => {
+    setGuardado(false);
+  }, [tipo, a, b, c]);
+
+  // El divisor no puede ser 0: A en directa, C en inversa
+  const errorA = tipo === 'directa' && a.trim() !== '' && aNumero(a) === 0;
+  const errorC = tipo === 'inversa' && c.trim() !== '' && aNumero(c) === 0;
+
+  const calculo = useMemo(() => {
     const na = aNumero(a);
     const nb = aNumero(b);
     const nc = aNumero(c);
-    if (![na, nb, nc].every(Number.isFinite)) return null;
+    if (![na, nb, nc].every(Number.isFinite) || errorA || errorC) return null;
 
     if (tipo === 'directa') {
-      if (na === 0) return { error: 'A no puede ser 0' };
-      const x = (nb * nc) / na;
-      return { x, desarrollo: `X = (${formatear(nb)} × ${formatear(nc)}) ÷ ${formatear(na)}` };
+      const producto = nb * nc;
+      return { na, nb, nc, producto, divisor: na, x: producto / na, opProducto: `${fmt(nb)} × ${fmt(nc)}` };
     }
+    const producto = na * nb;
+    return { na, nb, nc, producto, divisor: nc, x: producto / nc, opProducto: `${fmt(na)} × ${fmt(nb)}` };
+  }, [tipo, a, b, c, errorA, errorC]);
 
-    if (nc === 0) return { error: 'C no puede ser 0' };
-    const x = (na * nb) / nc;
-    return { x, desarrollo: `X = (${formatear(na)} × ${formatear(nb)}) ÷ ${formatear(nc)}` };
-  }, [tipo, a, b, c]);
+  const cambiarTipo = (t: Tipo) => {
+    setTipo(t);
+    setCalculado(false);
+  };
 
-  const reiniciar = () => {
+  const cargarEjemplo = () => {
+    const [ea, eb, ec] = config.ejemplo;
+    setA(ea);
+    setB(eb);
+    setC(ec);
+    setCalculado(false);
+  };
+
+  const limpiar = () => {
     setA('');
     setB('');
     setC('');
+    setCalculado(false);
+    scrollRef.current?.scrollTo({ y: 0, animated: true });
   };
 
-  const inputStyle = [
-    styles.inputField,
-    { color: colors.text, backgroundColor: colors.backgroundElement, borderColor: colors.border },
-  ];
+  const calcular = () => {
+    setCalculado(true);
+    setTimeout(() => {
+      scrollRef.current?.scrollTo({ y: Math.max(resultadoY.current - Spacing.three, 0), animated: true });
+    }, 80);
+  };
 
-  const valorX = resultado !== null && 'x' in resultado ? resultado.x : null;
-  const tieneValor = valorX !== null;
+  const guardar = async () => {
+    if (!calculo) return;
+    await guardarEnHistorial({
+      calculadoraId: CALC_ID,
+      resultado: fmt(calculo.x),
+      resumen: `${tipo === 'directa' ? 'Directa' : 'Inversa'} · ${fmt(calculo.na)} → ${fmt(calculo.nb)}, ${fmt(calculo.nc)} → X`,
+    });
+    setGuardado(true);
+  };
+
+  const mostrarResultado = calculado && calculo !== null;
+  const xVisible = mostrarResultado && calculo ? fmt(calculo.x) : null;
+
+  const inputStyle = (error: boolean) => [
+    styles.input,
+    styles.inputValor,
+    { color: colors.text, borderColor: error ? colors.danger : colors.border },
+  ];
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Stack.Screen
-        options={{
-          headerShown: true,
-          title: 'Regla de 3',
-          headerStyle: { backgroundColor: colors.surface },
-          headerTintColor: colors.text,
-          headerShadowVisible: false,
-          headerLeft: () => (
-            <Pressable onPress={() => router.back()} hitSlop={8} style={styles.headerButton}>
-              <Ionicons name="arrow-back" size={22} color={colors.text} />
-            </Pressable>
-          ),
-          headerRight: () => (
-            <Pressable onPress={reiniciar} hitSlop={8} style={styles.headerButton}>
-              <Ionicons name="refresh" size={19} color={colors.textSecondary} />
-            </Pressable>
-          ),
-        }}
-      />
+      <HeaderCalculadora calculadoraId={CALC_ID} />
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <SafeAreaView style={{ flex: 1 }} edges={['bottom']}>
-          <ScrollView
-            contentContainerStyle={styles.scrollContent}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}>
+        <ScrollView
+          ref={scrollRef}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}>
 
-            {/* SELECTOR DIRECTA / INVERSA */}
-            <View
-              style={[
-                styles.segment,
-                { backgroundColor: colors.surface, borderColor: colors.border },
-              ]}>
-              {(['directa', 'inversa'] as Tipo[]).map((t) => {
-                const activo = t === tipo;
-                return (
-                  <Pressable
-                    key={t}
-                    onPress={() => setTipo(t)}
-                    style={[styles.segmentItem, activo && { backgroundColor: colors.primary }]}>
-                    <Text
-                      style={[
-                        styles.segmentText,
-                        { color: activo ? '#ffffff' : colors.textSecondary },
-                      ]}>
-                      {t === 'directa' ? 'Directa' : 'Inversa'}
-                    </Text>
-                  </Pressable>
-                );
-              })}
+          <Segmentado
+            opciones={[
+              { id: 'directa', texto: 'Directa' },
+              { id: 'inversa', texto: 'Inversa' },
+            ]}
+            valor={tipo}
+            onCambiar={cambiarTipo}
+          />
+
+          <AvisoInfo>{config.aviso}</AvisoInfo>
+
+          <Seccion
+            titulo="Tu proporción"
+            accion={<BotonPildora label="Ejemplo" icono="school-outline" onPress={cargarEjemplo} />}>
+            <View style={styles.encabezados}>
+              <Text style={[styles.encabezado, styles.colValor, { color: colors.textMuted }]}>
+                MAGNITUD 1
+              </Text>
+              <View style={styles.colFlecha} />
+              <Text style={[styles.encabezado, styles.colValor, { color: colors.textMuted }]}>
+                MAGNITUD 2
+              </Text>
             </View>
 
-            <Text style={[styles.ayudaTipo, { color: colors.textMuted }]}>
-              {tipo === 'directa'
-                ? 'Si una magnitud aumenta, la otra también aumenta (más kilos, más precio).'
-                : 'Si una magnitud aumenta, la otra disminuye (más trabajadores, menos días).'}
-            </Text>
-
-            {/* PROPORCIÓN */}
-            <View
-              style={[
-                styles.proporcionCard,
-                { backgroundColor: colors.surface, borderColor: colors.border },
-              ]}>
-              <View style={styles.filaProporcion}>
-                <Text style={[styles.conector, { color: colors.textMuted }]}>Si</Text>
-                <TextInput
-                  value={a}
-                  onChangeText={setA}
-                  placeholder="A"
-                  placeholderTextColor={colors.textMuted}
-                  keyboardType="decimal-pad"
-                  style={inputStyle}
-                />
-                <Ionicons name="arrow-forward" size={18} color={colors.textMuted} />
-                <TextInput
-                  value={b}
-                  onChangeText={setB}
-                  placeholder="B"
-                  placeholderTextColor={colors.textMuted}
-                  keyboardType="decimal-pad"
-                  style={inputStyle}
-                />
+            {/* Fila 1: A → B */}
+            <View style={styles.fila}>
+              <View style={styles.conector}>
+                <Text style={styles.conectorTexto}>Si</Text>
               </View>
-
-              <View style={[styles.separador, { backgroundColor: colors.border }]} />
-
-              <View style={styles.filaProporcion}>
-                <Text style={[styles.conector, { color: colors.textMuted }]}>Con</Text>
-                <TextInput
-                  value={c}
-                  onChangeText={setC}
-                  placeholder="C"
-                  placeholderTextColor={colors.textMuted}
-                  keyboardType="decimal-pad"
-                  style={inputStyle}
-                />
-                <Ionicons name="arrow-forward" size={18} color={colors.textMuted} />
-                <View
-                  style={[
-                    styles.inputField,
-                    styles.xBox,
-                    {
-                      backgroundColor: tieneValor ? colors.primary : colors.backgroundElement,
-                      borderColor: tieneValor ? colors.primary : colors.border,
-                    },
-                  ]}>
-                  <Text
-                    style={[styles.xText, { color: tieneValor ? '#ffffff' : colors.textMuted }]}
-                    numberOfLines={1}
-                    adjustsFontSizeToFit>
-                    {valorX !== null ? formatear(valorX) : 'X'}
-                  </Text>
-                </View>
-              </View>
+              <TextInput
+                value={a}
+                onChangeText={setA}
+                placeholder="A"
+                placeholderTextColor={colors.textMuted}
+                keyboardType="decimal-pad"
+                maxLength={12}
+                style={inputStyle(errorA)}
+              />
+              <Ionicons name="arrow-forward" size={18} color={colors.textMuted} style={styles.colFlecha} />
+              <TextInput
+                value={b}
+                onChangeText={setB}
+                placeholder="B"
+                placeholderTextColor={colors.textMuted}
+                keyboardType="decimal-pad"
+                maxLength={12}
+                style={inputStyle(false)}
+              />
             </View>
 
-            {/* RESULTADO */}
-            <View
-              style={[
-                styles.displayCard,
-                { backgroundColor: colors.surface, borderColor: colors.border },
-              ]}>
-              <Text style={[styles.displayLabel, { color: colors.textMuted }]}>VALOR DE X</Text>
-              <Text
+            {/* Fila 2: C → X */}
+            <View style={styles.fila}>
+              <View style={styles.conector}>
+                <Text style={styles.conectorTexto}>Con</Text>
+              </View>
+              <TextInput
+                value={c}
+                onChangeText={setC}
+                placeholder="C"
+                placeholderTextColor={colors.textMuted}
+                keyboardType="decimal-pad"
+                maxLength={12}
+                style={inputStyle(errorC)}
+              />
+              <Ionicons name="arrow-forward" size={18} color={colors.textMuted} style={styles.colFlecha} />
+              <View
                 style={[
-                  styles.metricText,
-                  {
-                    color:
-                      resultado === null
-                        ? colors.textMuted
-                        : 'error' in resultado
-                        ? colors.danger
-                        : colors.primary,
-                  },
+                  styles.input,
+                  styles.colValor,
+                  styles.xBox,
+                  xVisible
+                    ? { backgroundColor: Acento.base, borderColor: Acento.base }
+                    : { borderColor: Acento.borde, backgroundColor: Acento.fondo },
                 ]}>
-                {valorX !== null ? formatear(valorX) : '—'}
-              </Text>
-              <Text style={[styles.detalleText, { color: colors.textSecondary }]}>
-                {resultado === null
-                  ? 'Completa A, B y C para calcular'
-                  : 'error' in resultado
-                  ? resultado.error
-                  : resultado.desarrollo}
-              </Text>
+                <Text
+                  style={[styles.xTexto, { color: xVisible ? '#ffffff' : Acento.claro }]}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit>
+                  {xVisible ?? 'X'}
+                </Text>
+              </View>
             </View>
 
-            {/* BLOQUE PEDAGÓGICO COLAPSABLE */}
-            <View
-              style={[
-                styles.pedagogicCard,
-                { backgroundColor: colors.surface, borderColor: colors.border },
-              ]}>
-              <Pressable
-                onPress={() => setMostrarExplicacion((prev) => !prev)}
-                style={styles.pedagogicHeader}>
-                <View style={styles.pedagogicHeaderLeft}>
-                  <Ionicons name="help-circle" size={18} color={colors.accentTip} />
-                  <Text style={[styles.pedagogicTitle, { color: colors.text }]}>
-                    ¿Directa o inversa?
-                  </Text>
-                </View>
-                <Ionicons
-                  name={mostrarExplicacion ? 'chevron-up' : 'chevron-down'}
-                  size={18}
-                  color={colors.textMuted}
-                />
-              </Pressable>
+            {(errorA || errorC) && (
+              <Text style={[styles.errorTexto, { color: colors.danger }]}>
+                {errorA ? 'A no puede ser 0 (es el divisor).' : 'C no puede ser 0 (es el divisor).'}
+              </Text>
+            )}
+          </Seccion>
 
-              {mostrarExplicacion && (
-                <View style={styles.pedagogicContent}>
-                  <View
-                    style={[
-                      styles.formulaBox,
-                      { backgroundColor: colors.backgroundElement, borderColor: colors.border },
-                    ]}>
-                    <Text style={[styles.formulaLabel, { color: colors.textMuted }]}>DIRECTA</Text>
-                    <Text style={[styles.formulaMath, { color: colors.text }]}>X = (B × C) ÷ A</Text>
-                    <Text style={[styles.formulaEjemplo, { color: colors.textMuted }]}>
-                      3 kg cuestan $6.000 → 5 kg cuestan $10.000
-                    </Text>
-                  </View>
+          <BotonPrimario
+            label="Calcular X"
+            icono="swap-horizontal"
+            onPress={calcular}
+            deshabilitado={calculo === null}
+          />
 
-                  <View
-                    style={[
-                      styles.formulaBox,
-                      { backgroundColor: colors.backgroundElement, borderColor: colors.border },
-                    ]}>
-                    <Text style={[styles.formulaLabel, { color: colors.textMuted }]}>INVERSA</Text>
-                    <Text style={[styles.formulaMath, { color: colors.text }]}>X = (A × B) ÷ C</Text>
-                    <Text style={[styles.formulaEjemplo, { color: colors.textMuted }]}>
-                      4 obreros tardan 6 días → 8 obreros tardan 3 días
-                    </Text>
-                  </View>
+          {mostrarResultado && calculo && (
+            <TarjetaResultado
+              titulo="El valor de X es"
+              valor={fmt(calculo.x)}
+              tono="info"
+              badge={tipo === 'directa' ? 'Directa' : 'Inversa'}
+              descripcion={`Si ${fmt(calculo.na)} → ${fmt(calculo.nb)}, entonces ${fmt(calculo.nc)} → ${fmt(calculo.x)}`}
+              onLayout={(e) => {
+                resultadoY.current = e.nativeEvent.layout.y;
+              }}>
+              <DetalleCalculo
+                filas={[
+                  {
+                    key: 'producto',
+                    label: tipo === 'directa' ? 'Multiplicar en cruz (B × C)' : 'Multiplicar en línea (A × B)',
+                    operacion: calculo.opProducto,
+                    valor: fmt(calculo.producto),
+                  },
+                  {
+                    key: 'division',
+                    label: tipo === 'directa' ? 'Dividir por A' : 'Dividir por C',
+                    operacion: `${fmt(calculo.producto)} ÷ ${fmt(calculo.divisor)}`,
+                    valor: fmt(calculo.x),
+                  },
+                ]}
+                total={{ label: 'X', valor: fmt(calculo.x) }}
+                tonoTotal="info"
+              />
+            </TarjetaResultado>
+          )}
 
-                  <View
-                    style={[
-                      styles.pedagogicTipBox,
-                      { backgroundColor: colors.accentTipBg, borderColor: colors.accentTip },
-                    ]}>
-                    <View style={styles.pedagogicTipHeader}>
-                      <Ionicons name="bulb" size={16} color={colors.accentTip} />
-                      <Text style={[styles.pedagogicTipTitle, { color: colors.accentTip }]}>
-                        Tip PAES
-                      </Text>
-                    </View>
-                    <Text style={[styles.pedagogicTipBody, { color: colors.textSecondary }]}>
-                      Antes de calcular pregúntate: si duplico una magnitud, ¿la otra se duplica o
-                      se reduce a la mitad? Esa pregunta te dice si es directa o inversa.
-                    </Text>
-                  </View>
-                </View>
-              )}
-            </View>
-          </ScrollView>
-        </SafeAreaView>
+          <ExplicacionPlegable
+            titulo="¿Directa o inversa?"
+            texto="Pregúntate: si duplico una magnitud, ¿la otra se duplica (directa) o se reduce a la mitad (inversa)? Esa pregunta define qué fórmula usar."
+            formula={config.formula}
+            tip={config.tip}
+          />
+        </ScrollView>
+
+        <BarraAcciones
+          onLimpiar={limpiar}
+          onGuardar={guardar}
+          guardarDeshabilitado={!mostrarResultado}
+          guardado={guardado}
+        />
       </KeyboardAvoidingView>
     </View>
   );
@@ -294,161 +304,76 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  headerButton: {
-    width: 40,
-    height: 40,
+  scrollContent: {
+    paddingHorizontal: Spacing.three,
+    paddingBottom: Spacing.four,
+    gap: Spacing.three,
+  },
+  encabezados: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: GAP,
+    paddingLeft: ANCHO_CONECTOR + GAP,
+    marginBottom: -6,
+  },
+  encabezado: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.6,
+    textAlign: 'center',
+  },
+  colValor: {
+    flex: 1,
+  },
+  colFlecha: {
+    width: 18,
+    textAlign: 'center',
+  },
+  fila: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: GAP,
+  },
+  conector: {
+    width: ANCHO_CONECTOR,
+    height: ALTO_INPUT,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Acento.borde,
+    backgroundColor: Acento.fondo,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  scrollContent: {
-    padding: Spacing.four,
-    gap: Spacing.three,
-  },
-  segment: {
-    flexDirection: 'row',
-    padding: 4,
-    borderRadius: 14,
-    borderWidth: 1,
-    gap: 4,
-  },
-  segmentItem: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  segmentText: {
+  conectorTexto: {
+    color: Acento.claro,
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '800',
   },
-  ayudaTipo: {
-    fontSize: 12,
-    lineHeight: 17,
-  },
-  proporcionCard: {
-    borderRadius: 16,
-    borderWidth: 1,
-    padding: Spacing.three,
-    gap: Spacing.three,
-  },
-  filaProporcion: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  conector: {
-    width: 30,
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  separador: {
-    height: 1,
-  },
-  inputField: {
-    flex: 1,
-    height: 52,
+  input: {
+    height: ALTO_INPUT,
     borderRadius: 12,
     borderWidth: 1,
-    paddingHorizontal: 12,
-    fontSize: 17,
+    backgroundColor: 'rgba(15,23,42,0.6)',
+  },
+  inputValor: {
+    flex: 1,
+    paddingHorizontal: 8,
+    fontSize: 18,
     fontWeight: '700',
     textAlign: 'center',
   },
   xBox: {
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: 8,
   },
-  xText: {
-    fontSize: 17,
+  xTexto: {
+    fontSize: 18,
     fontWeight: '800',
   },
-  displayCard: {
-    borderRadius: 20,
-    padding: Spacing.four,
-    borderWidth: 1,
-    alignItems: 'center',
-    gap: 6,
-    marginTop: Spacing.two,
-  },
-  displayLabel: {
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 0.6,
-  },
-  metricText: {
-    fontSize: 48,
-    fontWeight: '900',
-    letterSpacing: -1.5,
-  },
-  detalleText: {
-    fontSize: 13,
-    textAlign: 'center',
-    lineHeight: 18,
-  },
-  pedagogicCard: {
-    borderRadius: 16,
-    borderWidth: 1,
-    padding: Spacing.three,
-    marginTop: Spacing.two,
-    gap: Spacing.three,
-  },
-  pedagogicHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  pedagogicHeaderLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    flex: 1,
-  },
-  pedagogicTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    flex: 1,
-  },
-  pedagogicContent: {
-    gap: Spacing.three,
-    paddingTop: Spacing.two,
-  },
-  formulaBox: {
-    padding: Spacing.three,
-    borderRadius: 10,
-    borderWidth: 1,
-    alignItems: 'center',
-    gap: 4,
-  },
-  formulaLabel: {
-    fontSize: 10,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-  },
-  formulaMath: {
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  formulaEjemplo: {
+  errorTexto: {
+    marginLeft: ANCHO_CONECTOR + GAP,
     fontSize: 12,
-    textAlign: 'center',
-  },
-  pedagogicTipBox: {
-    padding: Spacing.three,
-    borderRadius: 12,
-    borderLeftWidth: 4,
-    gap: 4,
-  },
-  pedagogicTipHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  pedagogicTipTitle: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  pedagogicTipBody: {
-    fontSize: 12,
-    lineHeight: 17,
+    fontWeight: '600',
   },
 });
