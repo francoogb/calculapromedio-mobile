@@ -9,18 +9,64 @@ import { Platform } from 'react-native';
 
 export const Colors = {
   light: {
-    text: '#000000',
-    background: '#ffffff',
-    backgroundElement: '#F0F0F3',
-    backgroundSelected: '#E0E1E6',
-    textSecondary: '#60646C',
+    // Paleta Principal Oficial
+    navy: '#1b1844',
+    text: '#0f172a',
+    textSecondary: '#334155',
+    textMuted: '#64748b',
+    background: '#f8fafc',
+    surface: '#ffffff',
+    border: '#e2e8f0',
+    
+    // Brand y Acentos
+    primary: '#4f46e5',
+    primaryHover: '#4338ca',
+    accentTip: '#7c3aed',
+    accentTipBg: '#f5f3ff',
+    
+    // Estados
+    success: '#16a34a',
+    successBg: '#dcfce7',
+    danger: '#dc2626',
+    dangerBg: '#fee2e2',
+    warning: '#f59e0b',
+    warningBg: '#fef3c7',
+
+    // Compatibilidad
+    backgroundElement: '#f8fafc',
+    backgroundSelected: '#e2e8f0',
+    brand: '#1b1844',
+    brandText: '#ffffff',
+    brandAccent: '#7c3aed',
+    brandSecondary: '#4f46e5',
   },
   dark: {
-    text: '#ffffff',
-    background: '#000000',
-    backgroundElement: '#212225',
-    backgroundSelected: '#2E3135',
-    textSecondary: '#B0B4BA',
+    navy: '#0f172a',
+    text: '#f8fafc',
+    textSecondary: '#cbd5e1',
+    textMuted: '#94a3b8',
+    background: '#0b101e',
+    surface: '#151d30',
+    border: '#334155',
+
+    primary: '#6366f1',
+    primaryHover: '#4f46e5',
+    accentTip: '#a78bfa',
+    accentTipBg: '#2e1065',
+
+    success: '#22c55e',
+    successBg: '#14532d',
+    danger: '#ef4444',
+    dangerBg: '#7f1d1d',
+    warning: '#fbbf24',
+    warningBg: '#78350f',
+
+    backgroundElement: '#1e293b',
+    backgroundSelected: '#334155',
+    brand: '#0b101e',
+    brandText: '#ffffff',
+    brandAccent: '#a78bfa',
+    brandSecondary: '#6366f1',
   },
 } as const;
 
