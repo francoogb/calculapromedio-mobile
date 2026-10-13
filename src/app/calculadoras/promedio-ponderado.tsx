@@ -29,6 +29,12 @@ const CALC_ID = 'promedio-ponderado';
 const colors = Colors.dark;
 
 /** Colores del número de cada evaluación (se repiten en ciclo). */
+// Medidas compartidas para que número, inputs y encabezados queden alineados
+const ANCHO_NUMERO = 44;
+const ANCHO_ACCION = 36;
+const ALTO_INPUT = 50;
+const GAP = 10;
+
 const COLORES_FILA = ['#9d174d', '#1d4ed8', '#5b21b6', '#0f766e', '#b45309'];
 
 type Fila = {
@@ -189,84 +195,105 @@ export default function PromedioPonderadoScreen() {
           <Seccion
             titulo="Evaluaciones"
             accion={<BotonPildora label="Ejemplo" icono="school-outline" onPress={cargarEjemplo} />}>
+            {/* Encabezados de columna, alineados con los inputs */}
+            <View style={styles.encabezados}>
+              <Text style={[styles.encabezado, styles.colNota, { color: colors.textMuted }]}>
+                NOTA
+              </Text>
+              <Text style={[styles.encabezado, styles.colPeso, { color: colors.textMuted }]}>
+                PESO
+              </Text>
+              <View style={styles.colAccion} />
+            </View>
+
             {filas.map((fila, index) => {
               const n = aNumero(fila.nota);
               const notaFueraDeRango = fila.nota.trim() !== '' && !notaValida(n);
               const unica = filas.length <= 1;
 
               return (
-                <View key={fila.id} style={styles.fila}>
-                  <View
-                    style={[
-                      styles.numero,
-                      { backgroundColor: COLORES_FILA[index % COLORES_FILA.length] },
-                    ]}>
-                    <Text style={styles.numeroTexto}>{index + 1}</Text>
-                  </View>
+                <View
+                  key={fila.id}
+                  style={[
+                    styles.fila,
+                    index > 0 && { borderTopWidth: 1, borderTopColor: colors.border },
+                  ]}>
+                  <TextInput
+                    value={fila.nombre}
+                    onChangeText={(t) => actualizar(fila.id, 'nombre', t)}
+                    placeholder={`Evaluación ${index + 1}`}
+                    placeholderTextColor={colors.textMuted}
+                    style={[styles.nombreInput, { color: colors.textSecondary }]}
+                    maxLength={28}
+                  />
 
-                  <View style={styles.filaCuerpo}>
-                    <View style={styles.filaTop}>
-                      <TextInput
-                        value={fila.nombre}
-                        onChangeText={(t) => actualizar(fila.id, 'nombre', t)}
-                        placeholder={`Evaluación ${index + 1}`}
-                        placeholderTextColor={colors.textMuted}
-                        style={[styles.nombreInput, { color: colors.text }]}
-                        maxLength={28}
-                      />
-                      <Pressable
-                        disabled={unica}
-                        onPress={() => eliminar(fila.id)}
-                        hitSlop={8}
-                        accessibilityLabel="Eliminar evaluación"
-                        style={({ pressed }) => [
-                          styles.eliminar,
-                          { opacity: unica ? 0.3 : pressed ? 0.6 : 1 },
-                        ]}>
-                        <Ionicons name="trash-outline" size={20} color="#a5b4fc" />
-                      </Pressable>
+                  <View style={styles.filaLinea}>
+                    <View
+                      style={[
+                        styles.numero,
+                        { backgroundColor: COLORES_FILA[index % COLORES_FILA.length] },
+                      ]}>
+                      <Text style={styles.numeroTexto}>{index + 1}</Text>
                     </View>
 
-                    <View style={styles.filaInputs}>
+                    <TextInput
+                      value={fila.nota}
+                      onChangeText={(t) => actualizar(fila.id, 'nota', t)}
+                      placeholder="6.5"
+                      placeholderTextColor={colors.textMuted}
+                      keyboardType="decimal-pad"
+                      maxLength={4}
+                      style={[
+                        styles.input,
+                        styles.colNota,
+                        styles.inputNota,
+                        {
+                          color: colors.text,
+                          borderColor: notaFueraDeRango ? colors.danger : colors.border,
+                        },
+                      ]}
+                    />
+
+                    <View
+                      style={[
+                        styles.input,
+                        styles.colPeso,
+                        styles.inputPctWrap,
+                        { borderColor: colors.border },
+                      ]}>
                       <TextInput
-                        value={fila.nota}
-                        onChangeText={(t) => actualizar(fila.id, 'nota', t)}
-                        placeholder="Nota"
+                        value={fila.porcentaje}
+                        onChangeText={(t) => actualizar(fila.id, 'porcentaje', t)}
+                        placeholder="30"
                         placeholderTextColor={colors.textMuted}
                         keyboardType="decimal-pad"
-                        maxLength={4}
-                        style={[
-                          styles.input,
-                          styles.inputNota,
-                          {
-                            color: colors.text,
-                            borderColor: notaFueraDeRango ? colors.danger : colors.border,
-                          },
-                        ]}
+                        maxLength={5}
+                        style={[styles.inputPct, { color: colors.text }]}
                       />
-                      <View
-                        style={[styles.input, styles.inputPctWrap, { borderColor: colors.border }]}>
-                        <TextInput
-                          value={fila.porcentaje}
-                          onChangeText={(t) => actualizar(fila.id, 'porcentaje', t)}
-                          placeholder="Peso"
-                          placeholderTextColor={colors.textMuted}
-                          keyboardType="decimal-pad"
-                          maxLength={5}
-                          style={[styles.inputPct, { color: colors.text }]}
-                        />
-                        <View style={[styles.sufijo, { borderLeftColor: colors.border }]}>
-                          <Text style={[styles.sufijoTexto, { color: colors.textMuted }]}>%</Text>
-                        </View>
+                      <View style={[styles.sufijo, { borderLeftColor: colors.border }]}>
+                        <Text style={[styles.sufijoTexto, { color: colors.textMuted }]}>%</Text>
                       </View>
                     </View>
 
-                    {notaFueraDeRango && (
-                      <Text style={[styles.errorTexto, { color: colors.danger }]}>
-                        La nota debe estar entre 1.0 y 7.0
-                      </Text>
-                    )}
+                    <Pressable
+                      disabled={unica}
+                      onPress={() => eliminar(fila.id)}
+                      hitSlop={6}
+                      accessibilityLabel="Eliminar evaluación"
+                      style={({ pressed }) => [
+                        styles.colAccion,
+                        styles.eliminar,
+                        { opacity: unica ? 0.3 : pressed ? 0.6 : 1 },
+                      ]}>
+                      <Ionicons name="trash-outline" size={20} color="#a5b4fc" />
+                    </Pressable>
                   </View>
+
+                  {notaFueraDeRango && (
+                    <Text style={[styles.errorTexto, { color: colors.danger }]}>
+                      La nota debe estar entre 1.0 y 7.0
+                    </Text>
+                  )}
                 </View>
               );
             })}
@@ -399,64 +426,75 @@ const styles = StyleSheet.create({
     gap: Spacing.three,
   },
 
-  // Fila de evaluación
-  fila: {
+  // Fila de evaluación: [número | nota | peso | basurero] en una línea,
+  // nombre arriba con la misma sangría que la columna de nota.
+  encabezados: {
     flexDirection: 'row',
-    gap: 12,
+    alignItems: 'center',
+    gap: GAP,
+    paddingLeft: ANCHO_NUMERO + GAP,
+    marginBottom: -6,
+  },
+  encabezado: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.6,
+    textAlign: 'center',
+  },
+  colNota: {
+    flex: 1,
+  },
+  colPeso: {
+    flex: 1.3,
+  },
+  colAccion: {
+    width: ANCHO_ACCION,
+  },
+  fila: {
+    gap: 6,
+    paddingTop: 12,
+  },
+  nombreInput: {
+    marginLeft: ANCHO_NUMERO + GAP,
+    fontSize: 14,
+    fontWeight: '600',
+    paddingVertical: 2,
+  },
+  filaLinea: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: GAP,
   },
   numero: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
+    width: ANCHO_NUMERO,
+    height: ALTO_INPUT,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 2,
   },
   numeroTexto: {
     color: '#ffffff',
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: '800',
   },
-  filaCuerpo: {
-    flex: 1,
-    gap: 8,
-  },
-  filaTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  nombreInput: {
-    flex: 1,
-    fontSize: 15,
-    fontWeight: '600',
-    paddingVertical: 4,
-  },
   eliminar: {
-    width: 36,
-    height: 36,
+    height: ALTO_INPUT,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  filaInputs: {
-    flexDirection: 'row',
-    gap: 10,
-  },
   input: {
-    height: 50,
+    height: ALTO_INPUT,
     borderRadius: 12,
     borderWidth: 1,
     backgroundColor: 'rgba(15,23,42,0.6)',
   },
   inputNota: {
-    flex: 1,
-    paddingHorizontal: 12,
+    paddingHorizontal: 8,
     fontSize: 17,
     fontWeight: '700',
     textAlign: 'center',
   },
   inputPctWrap: {
-    flex: 1.2,
     flexDirection: 'row',
     alignItems: 'center',
     overflow: 'hidden',
@@ -464,13 +502,13 @@ const styles = StyleSheet.create({
   inputPct: {
     flex: 1,
     height: '100%',
-    paddingHorizontal: 12,
+    paddingHorizontal: 8,
     fontSize: 17,
     fontWeight: '700',
     textAlign: 'center',
   },
   sufijo: {
-    width: 42,
+    width: 38,
     height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
@@ -481,6 +519,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   errorTexto: {
+    marginLeft: ANCHO_NUMERO + GAP,
     fontSize: 12,
     fontWeight: '600',
   },
