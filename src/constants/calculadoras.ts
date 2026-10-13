@@ -79,6 +79,36 @@ export const CALCULADORAS: Calculadora[] = [
     colorIcon: '#e11d48',
   },
   {
+    id: 'nota-escala',
+    nombre: 'Escala de Notas',
+    descripcion: 'Convierte el puntaje de una prueba en nota según la exigencia',
+    categoria: 'escolares',
+    ruta: '/calculadoras/nota-escala',
+    icono: 'document-text-outline',
+    colorBg: '#e0e7ff',
+    colorIcon: '#4f46e5',
+  },
+  {
+    id: 'asistencia',
+    nombre: 'Asistencia',
+    descripcion: 'Cuántas clases más puedes faltar sin bajar del mínimo',
+    categoria: 'universitarias',
+    ruta: '/calculadoras/asistencia',
+    icono: 'calendar-outline',
+    colorBg: '#dcfce7',
+    colorIcon: '#16a34a',
+  },
+  {
+    id: 'conversor-escalas',
+    nombre: 'Conversor de Escalas',
+    descripcion: 'Convierte tu nota entre escalas de Chile y otros países',
+    categoria: 'universitarias',
+    ruta: '/calculadoras/conversor-escalas',
+    icono: 'globe-outline',
+    colorBg: '#cffafe',
+    colorIcon: '#0891b2',
+  },
+  {
     id: 'paes-ponderado',
     nombre: 'Puntaje PAES Ponderado',
     descripcion: 'Simula tu postulación combinando M1, Lenguaje, NEM y Ranking',
@@ -103,3 +133,21 @@ export const CALCULADORAS: Calculadora[] = [
 export function getCalculadora(id: string): Calculadora | undefined {
   return CALCULADORAS.find((c) => c.id === id);
 }
+
+/** Estilo visual de las tarjetas (home y listado comparten este diseño). */
+export const ESTILO_CARD: Record<
+  string,
+  { icono: keyof typeof Ionicons.glyphMap; color: string }
+> = {
+  'promedio-simple': { icono: 'list', color: '#14b8a6' },
+  'promedio-ponderado': { icono: 'calculator', color: '#f43f5e' },
+  'nota-minima': { icono: 'flash', color: '#3b82f6' },
+  nem: { icono: 'school', color: '#8b5cf6' },
+  porcentajes: { icono: 'pricetag', color: '#f97316' },
+  'regla-3': { icono: 'swap-horizontal', color: '#06b6d4' },
+  'nota-escala': { icono: 'document-text', color: '#6366f1' },
+  asistencia: { icono: 'calendar', color: '#22c55e' },
+  'conversor-escalas': { icono: 'globe', color: '#0ea5e9' },
+  'paes-ponderado': { icono: 'sparkles', color: '#7c3aed' },
+  ranking: { icono: 'trophy', color: '#f59e0b' },
+};
