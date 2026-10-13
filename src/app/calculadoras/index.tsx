@@ -1,5 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { Stack, router } from 'expo-router';
+import { Stack, router, type Href } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useMemo, useState } from 'react';
 import {
@@ -21,7 +21,7 @@ type Calculadora = {
   nombre: string;
   descripcion: string;
   categoria: Exclude<Categoria, 'todas'>;
-  ruta: `/${string}` | null;
+  ruta: Href | null;
   icono: keyof typeof Ionicons.glyphMap;
   colorBg: string;
   colorIcon: string;
@@ -73,7 +73,7 @@ const CALCULADORAS: Calculadora[] = [
     nombre: 'Porcentajes',
     descripcion: 'Calcula descuentos, aumentos y operaciones con porcentajes',
     categoria: 'escolares',
-    ruta: null,
+    ruta: '/calculadoras/porcentajes',
     icono: 'pie-chart-outline',
     colorBg: '#fef3c7',
     colorIcon: '#d97706',
@@ -83,7 +83,7 @@ const CALCULADORAS: Calculadora[] = [
     nombre: 'Regla de 3',
     descripcion: 'Proporción directa e inversa para resolución rápida',
     categoria: 'escolares',
-    ruta: null,
+    ruta: '/calculadoras/regla-3',
     icono: 'swap-horizontal-outline',
     colorBg: '#ffe4e6',
     colorIcon: '#e11d48',

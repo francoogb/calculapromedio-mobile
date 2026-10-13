@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
+import { router, type Href } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import {
   Pressable,
@@ -18,7 +18,7 @@ type CalculadoraPrincipal = {
   id: string;
   nombre: string;
   descripcion: string;
-  ruta: `/${string}` | null;
+  ruta: Href | null;
   icono: keyof typeof Ionicons.glyphMap;
   colorBg: string;
   colorIcon: string;
@@ -56,7 +56,7 @@ const PRINCIPALES: CalculadoraPrincipal[] = [
     id: 'porcentajes',
     nombre: 'Porcentajes',
     descripcion: 'Calcula descuentos, aumentos y operaciones con porcentajes.',
-    ruta: null,
+    ruta: '/calculadoras/porcentajes',
     icono: 'pie-chart-outline',
     colorBg: '#dcfce7',
     colorIcon: '#16a34a',
@@ -224,7 +224,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   decorContainer: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
   },
   decorIcon: {
     position: 'absolute',
