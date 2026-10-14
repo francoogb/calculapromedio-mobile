@@ -74,3 +74,15 @@ export async function borrarDelHistorial(id: string): Promise<void> {
     actuales.filter((e) => e.id !== id)
   );
 }
+
+// ── Onboarding ───────────────────────────────────────────────
+
+const KEY_ONBOARDING = 'onboarding:v1';
+
+export function getOnboardingVisto(): Promise<boolean> {
+  return leerJSON<boolean>(KEY_ONBOARDING, false);
+}
+
+export async function marcarOnboardingVisto(): Promise<void> {
+  await escribirJSON(KEY_ONBOARDING, true);
+}
