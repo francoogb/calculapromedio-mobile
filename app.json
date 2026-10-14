@@ -1,14 +1,18 @@
 {
   "expo": {
-    "name": "calculapromedio-mobile",
+    "name": "CalculaPromedio",
     "slug": "calculapromedio-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "calculapromediomobile",
+    "scheme": "calculapromedio",
     "userInterfaceStyle": "automatic",
-    "ios": {},
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "cl.calculapromedio.app"
+    },
     "android": {
+      "package": "cl.calculapromedio.app",
       "adaptiveIcon": {
         "backgroundColor": "#4f46e5",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
