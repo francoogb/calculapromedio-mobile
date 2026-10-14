@@ -24,6 +24,13 @@
     "plugins": [
       "expo-router",
       [
+        "expo-image-picker",
+        {
+          "photosPermission": "Necesitamos acceso a tus fotos para poder resolver ejercicios.",
+          "cameraPermission": "Necesitamos acceso a la cámara para fotografiar ejercicios."
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "backgroundColor": "#1B1844",
