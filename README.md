@@ -54,3 +54,13 @@ Join our community of developers creating universal apps.
 
 - [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
 - [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+
+
+---
+
+## Documentación del proyecto (CalculaPromedio)
+
+- [`docs/BUENAS-PRACTICAS.md`](docs/BUENAS-PRACTICAS.md) — convenciones y buenas prácticas del repo.
+- [`docs/RESOLVER-CON-FOTO.md`](docs/RESOLVER-CON-FOTO.md) — feature "Resolver con foto" (estado y pendientes).
+- [`docs/CONTENIDO-MOVIL.md`](docs/CONTENIDO-MOVIL.md) — plan para migrar el banco de ejercicios y la teoría de la web (pendiente).
+- [`docs/SESION-2026-10-13.md`](docs/SESION-2026-10-13.md) — bitácora: rediseño del home, Resolver con foto y onboarding.
