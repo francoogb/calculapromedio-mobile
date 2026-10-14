@@ -1,34 +1,13 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { DarkTheme, ThemeProvider } from 'expo-router';
 import { Tabs } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 import * as SplashScreen from 'expo-splash-screen';
-import { Pressable, StyleSheet } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { Colors } from '@/constants/theme';
 
 SplashScreen.preventAutoHideAsync();
-
-/** Botón central flotante de la tab bar: abre "Resolver con foto". */
-function CameraFabButton({ onPress }: { onPress?: (e: any) => void }) {
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel="Resolver con foto"
-      style={styles.fabSlot}>
-      <LinearGradient
-        colors={['#4f46e5', '#7c3aed']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.fab}>
-        <Ionicons name="camera" size={26} color="#ffffff" />
-      </LinearGradient>
-    </Pressable>
-  );
-}
 
 function AppTabs() {
   const colors = Colors.dark;
@@ -78,14 +57,6 @@ function AppTabs() {
         }}
       />
       <Tabs.Screen
-        name="resolver-foto"
-        options={{
-          title: '',
-          tabBarButton: (props) => <CameraFabButton {...props} />,
-          tabBarStyle: { display: 'none' },
-        }}
-      />
-      <Tabs.Screen
         name="favoritos"
         options={{
           title: 'Favoritos',
@@ -106,27 +77,6 @@ function AppTabs() {
     </Tabs>
   );
 }
-
-const styles = StyleSheet.create({
-  fabSlot: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  fab: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    marginTop: -12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#4f46e5',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-});
 
 export default function RootLayout() {
   return (
