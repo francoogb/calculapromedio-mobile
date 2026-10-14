@@ -12,16 +12,19 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { CALCULADORAS } from '@/constants/calculadoras';
+import { CALCULADORAS, ESTILO_CARD, type CategoriaCalculadora } from '@/constants/calculadoras';
 import { Colors, Spacing } from '@/constants/theme';
 
-type Categoria = 'todas' | 'escolares' | 'paes' | 'universitarias';
+type Categoria = 'todas' | CategoriaCalculadora;
 
 const CATEGORIAS: { id: Categoria; label: string }[] = [
   { id: 'todas', label: 'Todas' },
   { id: 'escolares', label: 'Escolares' },
   { id: 'paes', label: 'PAES' },
   { id: 'universitarias', label: 'Universidad' },
+  { id: 'finanzas', label: 'Finanzas' },
+  { id: 'salud', label: 'Salud' },
+  { id: 'utilidades', label: 'Utilidades' },
 ];
 
 export default function CalculadorasScreen() {
@@ -131,6 +134,7 @@ export default function CalculadorasScreen() {
         ) : (
           filtradas.map((calc) => {
             const disponible = calc.ruta !== null;
+            const estilo = ESTILO_CARD[calc.id];
             return (
               <Pressable
                 key={calc.id}
@@ -144,8 +148,12 @@ export default function CalculadorasScreen() {
                     opacity: !disponible ? 0.65 : pressed ? 0.9 : 1,
                   },
                 ]}>
-                <View style={[styles.cardIcon, { backgroundColor: calc.colorBg }]}>
-                  <Ionicons name={calc.icono} size={22} color={calc.colorIcon} />
+                <View
+                  style={[
+                    styles.cardIcon,
+                    { backgroundColor: `${estilo.color}2e`, borderColor: `${estilo.color}59` },
+                  ]}>
+                  <Ionicons name={estilo.icono} size={22} color={estilo.color} />
                 </View>
                 <View style={styles.cardTextCol}>
                   <View style={styles.cardTitleRow}>
@@ -159,12 +167,10 @@ export default function CalculadorasScreen() {
                   <Text
                     style={[styles.cardDesc, { color: colors.textMuted }]}
                     numberOfLines={2}>
-                    {calc.descripcion}
+                    {calc.descripcion.endsWith('.') ? calc.descripcion : `${calc.descripcion}.`}
                   </Text>
                 </View>
-                {disponible && (
-                  <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-                )}
+                <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
               </Pressable>
             );
           })
@@ -252,16 +258,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    padding: 14,
+    paddingHorizontal: 14,
+    height: 84,
     borderRadius: 14,
     borderWidth: 1,
   },
   cardIcon: {
-    width: 42,
-    height: 42,
-    borderRadius: 10,
+    width: 46,
+    height: 46,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
   },
   cardTextCol: {
     flex: 1,

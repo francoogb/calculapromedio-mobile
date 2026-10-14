@@ -1,63 +1,166 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
+import { router, useNavigation, type Href } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect, useState } from 'react';
 import {
+  FlatList,
+  Image,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
+  useWindowDimensions,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { getCalculadora, type Calculadora } from '@/constants/calculadoras';
+import { Onboarding } from '@/components/onboarding';
+import { ESTILO_CARD, getCalculadora, type Calculadora } from '@/constants/calculadoras';
 import { Colors, Spacing } from '@/constants/theme';
+import { getOnboardingVisto } from '@/lib/storage';
 
-/** Calculadoras destacadas en el home (íconos y colores vienen del catálogo único). */
+/** Calculadoras destacadas en el home (nombre/descripción/ruta vienen del catálogo único). */
 const PRINCIPALES: Calculadora[] = ['promedio-ponderado', 'nota-minima', 'nem', 'porcentajes']
   .map(getCalculadora)
   .filter((c): c is Calculadora => c !== undefined);
 
+type BannerIcono = {
+  name: keyof typeof Ionicons.glyphMap;
+  color: string;
+  top: number;
+  right: number;
+  rotate: string;
+  size: number;
+};
+
+type Banner = {
+  id: string;
+  gradient: [string, string];
+  titulo: string;
+  tituloAcento: string;
+  subtitulo: string;
+  boton: string;
+  ruta: Href;
+  iconos: BannerIcono[];
+};
+
+const BANNERS: Banner[] = [
+  {
+    id: 'catalogo',
+    gradient: ['#1e1b4b', '#4c1d95'],
+    titulo: 'Calculadoras académicas',
+    tituloAcento: 'en un solo lugar',
+    subtitulo: 'Notas, porcentajes, PAES y más. Rápido, simple y confiable.',
+    boton: 'Ver más',
+    ruta: '/calculadoras',
+    iconos: [
+      { name: 'school', color: '#a78bfa', top: 10, right: 78, rotate: '-12deg', size: 26 },
+      { name: 'flash', color: '#22d3ee', top: 44, right: 108, rotate: '8deg', size: 22 },
+      { name: 'pricetag', color: '#fb923c', top: 6, right: 22, rotate: '10deg', size: 24 },
+      { name: 'calculator', color: '#c4b5fd', top: 52, right: 34, rotate: '-6deg', size: 32 },
+    ],
+  },
+  {
+    id: 'paes',
+    gradient: ['#0c2a4a', '#312e81'],
+    titulo: 'Prepárate para la PAES',
+    tituloAcento: 'con simulaciones reales',
+    subtitulo: 'Estima tu NEM, tu puntaje ponderado y tu ranking de postulación.',
+    boton: 'Ver más',
+    ruta: '/calculadoras/nem',
+    iconos: [
+      { name: 'school', color: '#38bdf8', top: 14, right: 70, rotate: '-10deg', size: 26 },
+      { name: 'sparkles', color: '#a78bfa', top: 48, right: 26, rotate: '8deg', size: 24 },
+      { name: 'clipboard', color: '#c4b5fd', top: 8, right: 20, rotate: '6deg', size: 26 },
+    ],
+  },
+  {
+    id: 'favoritos',
+    gradient: ['#3b0764', '#701a75'],
+    titulo: 'Tus favoritas',
+    tituloAcento: 'siempre a mano',
+    subtitulo: 'Guarda las calculadoras que más usas y accede a ellas al instante.',
+    boton: 'Ver favoritos',
+    ruta: '/favoritos',
+    iconos: [
+      { name: 'heart', color: '#f472b6', top: 14, right: 80, rotate: '-8deg', size: 24 },
+      { name: 'star', color: '#fbbf24', top: 46, right: 34, rotate: '10deg', size: 24 },
+      { name: 'bookmark', color: '#e9d5ff', top: 8, right: 22, rotate: '-6deg', size: 22 },
+    ],
+  },
+];
+
+/** Funciones en camino (tarjeta informativa al final del home). */
+const NOVEDADES: { icono: keyof typeof Ionicons.glyphMap; texto: string }[] = [
+  { icono: 'camera-outline', texto: 'Resolver con una foto' },
+  { icono: 'book-outline', texto: 'Teoría PAES' },
+  { icono: 'timer-outline', texto: 'Simulacros y banco de preguntas' },
+  { icono: 'chatbubbles-outline', texto: 'Tutor IA' },
+];
+
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const colors = Colors.dark;
+  const { width } = useWindowDimensions();
+  const [bannerActivo, setBannerActivo] = useState(0);
+  const [mostrarOnboarding, setMostrarOnboarding] = useState(false);
+  const navigation = useNavigation();
+
+  useEffect(() => {
+    // __DEV__: forzar siempre para poder revisarlo; en producción solo la primera vez.
+    getOnboardingVisto().then((visto) => setMostrarOnboarding(__DEV__ || !visto));
+  }, []);
+
+  // Ocultar la tab bar mientras el onboarding cubre la pantalla
+  useEffect(() => {
+    navigation.setOptions({
+      tabBarStyle: mostrarOnboarding
+        ? { display: 'none' }
+        : {
+            backgroundColor: colors.surface,
+            borderTopColor: colors.border,
+            borderTopWidth: 1,
+            height: 60 + insets.bottom,
+            paddingTop: 6,
+            paddingBottom: Math.max(insets.bottom, 8),
+          },
+    });
+  }, [mostrarOnboarding, navigation, insets.bottom, colors]);
+
+  const bannerWidth = width - Spacing.four * 2;
+
+  const alCambiarBanner = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const index = Math.round(e.nativeEvent.contentOffset.x / bannerWidth);
+    setBannerActivo(index);
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <StatusBar style="light" />
 
-      {/* HERO superior con decoradores + header + saludo + search */}
-      <View
-        style={[
-          styles.hero,
-          {
-            backgroundColor: '#1b1844',
-            paddingTop: insets.top + Spacing.two,
-          },
-        ]}>
-        {/* Decoradores flotantes */}
-        <View pointerEvents="none" style={styles.decorContainer}>
-          <View style={[styles.decorIcon, { top: 50, left: 14 }]}>
-            <Ionicons name="school" size={48} color="#ffffff" />
-          </View>
-          <View style={[styles.decorIcon, { top: 120, right: 18 }]}>
-            <Ionicons name="calculator" size={56} color="#ffffff" />
-          </View>
-          <Text style={[styles.decorNumber, { bottom: 60, left: 32 }]}>6.5</Text>
-        </View>
+      {mostrarOnboarding && <Onboarding onListo={() => setMostrarOnboarding(false)} />}
 
-        {/* Header: logo + nombre + settings */}
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{
+          paddingHorizontal: Spacing.four,
+          paddingTop: insets.top + Spacing.three,
+          paddingBottom: Spacing.four,
+          gap: Spacing.three,
+        }}
+        showsVerticalScrollIndicator={false}>
+        {/* Header compacto: logo + nombre + settings */}
         <View style={styles.headerRow}>
           <View style={styles.brandRow}>
-            <LinearGradient
-              colors={['#22d3ee', '#4f46e5']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.brandMark}>
-              <Text style={styles.brandMarkText}>CP</Text>
-            </LinearGradient>
+            <Image
+              source={require('../../assets/images/icon1.png')}
+              style={styles.brandMark}
+              resizeMode="contain"
+            />
             <Text style={styles.brandText}>CalculaPromedio</Text>
           </View>
 
@@ -69,12 +172,81 @@ export default function HomeScreen() {
           </Pressable>
         </View>
 
-        {/* Saludo */}
-        <View style={styles.greetingBlock}>
-          <Text style={styles.greetingTitle}>¡Hola!</Text>
-          <Text style={styles.greetingSubtitle}>
-            Todas tus calculadoras académicas{'\n'}en un solo lugar.
-          </Text>
+        {/* Carrusel de banners */}
+        <FlatList
+          data={BANNERS}
+          keyExtractor={(item) => item.id}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          snapToInterval={bannerWidth}
+          decelerationRate="fast"
+          onMomentumScrollEnd={alCambiarBanner}
+          renderItem={({ item }) => (
+            <View style={{ width: bannerWidth }}>
+              <LinearGradient
+                colors={item.gradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.banner}>
+                {/* Iconos decorativos */}
+                <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+                  {item.iconos.map((icono) => (
+                    <View
+                      key={`${item.id}-${icono.name}`}
+                      style={[
+                        styles.bannerDecor,
+                        {
+                          top: icono.top,
+                          right: icono.right,
+                          transform: [{ rotate: icono.rotate }],
+                        },
+                      ]}>
+                      <Ionicons name={icono.name} size={icono.size} color={icono.color} />
+                    </View>
+                  ))}
+                </View>
+
+                <View style={styles.bannerTextCol}>
+                  <Text style={styles.bannerTitle}>
+                    {item.titulo}{' '}
+                    <Text style={styles.bannerTitleAccent}>{item.tituloAcento}</Text>
+                  </Text>
+                  <Text style={styles.bannerSubtitle} numberOfLines={2}>
+                    {item.subtitulo}
+                  </Text>
+                </View>
+
+                <Pressable
+                  onPress={() => router.push(item.ruta)}
+                  hitSlop={6}
+                  style={({ pressed }) => [
+                    styles.bannerBtn,
+                    { opacity: pressed ? 0.85 : 1 },
+                  ]}>
+                  <Text style={styles.bannerBtnText}>{item.boton}</Text>
+                  <Ionicons name="chevron-forward" size={13} color="#ffffff" />
+                </Pressable>
+              </LinearGradient>
+            </View>
+          )}
+        />
+
+        {/* Dots del carrusel */}
+        <View style={styles.dotsRow}>
+          {BANNERS.map((banner, index) => (
+            <View
+              key={banner.id}
+              style={[
+                styles.dot,
+                {
+                  width: index === bannerActivo ? 18 : 6,
+                  backgroundColor:
+                    index === bannerActivo ? '#ffffff' : 'rgba(255,255,255,0.30)',
+                },
+              ]}
+            />
+          ))}
         </View>
 
         {/* Search pill */}
@@ -87,18 +259,7 @@ export default function HomeScreen() {
             onFocus={() => router.push('/calculadoras')}
           />
         </View>
-      </View>
 
-      {/* CONTENIDO DARK */}
-      <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={{
-          paddingHorizontal: Spacing.four,
-          paddingTop: Spacing.four,
-          paddingBottom: Spacing.four,
-          gap: Spacing.three,
-        }}
-        showsVerticalScrollIndicator={false}>
         <View style={styles.sectionHeader}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Calculadoras principales</Text>
           <Pressable onPress={() => router.push('/calculadoras')} hitSlop={10}>
@@ -110,59 +271,83 @@ export default function HomeScreen() {
         </View>
 
         <View style={{ gap: 10 }}>
-          {PRINCIPALES.map((calc) => {
+          {PRINCIPALES.map((calc, i) => {
             const disponible = calc.ruta !== null;
+            const estilo = ESTILO_CARD[calc.id];
             return (
-              <Pressable
-                key={calc.id}
-                disabled={!disponible}
-                onPress={() => disponible && calc.ruta && router.push(calc.ruta)}
-                style={({ pressed }) => [
-                  styles.card,
-                  {
-                    backgroundColor: colors.surface,
-                    borderColor: colors.border,
-                    opacity: !disponible ? 0.6 : pressed ? 0.85 : 1,
-                  },
-                ]}>
-                <View style={[styles.cardIcon, { backgroundColor: calc.colorBg }]}>
-                  <Ionicons name={calc.icono} size={22} color={calc.colorIcon} />
-                </View>
-                <View style={styles.cardTextCol}>
-                  <Text style={[styles.cardTitle, { color: colors.text }]}>{calc.nombre}</Text>
-                  <Text
-                    style={[styles.cardDesc, { color: colors.textMuted }]}
-                    numberOfLines={2}>
-                    {calc.descripcion}
-                  </Text>
-                </View>
-                <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
-              </Pressable>
+              <View key={calc.id} style={{ gap: 10 }}>
+                <Pressable
+                  disabled={!disponible}
+                  onPress={() => disponible && calc.ruta && router.push(calc.ruta)}
+                  style={({ pressed }) => [
+                    styles.card,
+                    {
+                      backgroundColor: colors.surface,
+                      borderColor: colors.border,
+                      opacity: !disponible ? 0.6 : pressed ? 0.85 : 1,
+                    },
+                  ]}>
+                  <View
+                    style={[
+                      styles.cardIcon,
+                      { backgroundColor: `${estilo.color}2e`, borderColor: `${estilo.color}59` },
+                    ]}>
+                    <Ionicons name={estilo.icono} size={22} color={estilo.color} />
+                  </View>
+                  <View style={styles.cardTextCol}>
+                    <Text style={[styles.cardTitle, { color: colors.text }]}>{calc.nombre}</Text>
+                    <Text
+                      style={[styles.cardDesc, { color: colors.textMuted }]}
+                      numberOfLines={2}>
+                      {calc.descripcion.endsWith('.') ? calc.descripcion : `${calc.descripcion}.`}
+                    </Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+                </Pressable>
+
+                {i === 0 && (
+                  <Pressable
+                    onPress={() => router.push('/resolver-foto')}
+                    style={({ pressed }) => [
+                      styles.card,
+                      {
+                        backgroundColor: colors.surface,
+                        borderColor: colors.border,
+                        opacity: pressed ? 0.85 : 1,
+                      },
+                    ]}>
+                    <View style={[styles.cardIcon, { backgroundColor: '#3b82f62e', borderColor: '#3b82f659' }]}>
+                      <Ionicons name="camera" size={22} color="#3b82f6" />
+                    </View>
+                    <View style={styles.cardTextCol}>
+                      <Text style={[styles.cardTitle, { color: colors.text }]}>Resolver con foto</Text>
+                      <Text style={[styles.cardDesc, { color: colors.textMuted }]} numberOfLines={2}>
+                        Saca una foto a un ejercicio y obtén la solución paso a paso.
+                      </Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+                  </Pressable>
+                )}
+              </View>
             );
           })}
         </View>
 
-        {/* CTA Premium */}
-        <Pressable
-          onPress={() => {}}
-          style={({ pressed }) => [styles.premiumWrap, { opacity: pressed ? 0.92 : 1 }]}>
-          <LinearGradient
-            colors={['#4f46e5', '#7c3aed']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.premium}>
-            <View style={styles.premiumIconBg}>
-              <Ionicons name="star" size={20} color="#fbbf24" />
+        {/* Novedades: informativo, sin botón (no hay funciones pendientes "clicables") */}
+        <View style={styles.novedades}>
+          <View style={styles.novedadesHeader}>
+            <View style={styles.novedadesIcono}>
+              <Ionicons name="sparkles" size={18} color="#fbbf24" />
             </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.premiumTitle}>Desbloquea todas las calculadoras</Text>
-              <Text style={styles.premiumSubtitle}>
-                Sin límites y con funciones avanzadas.
-              </Text>
+            <Text style={styles.novedadesTitulo}>Se vienen novedades</Text>
+          </View>
+          {NOVEDADES.map((n) => (
+            <View key={n.texto} style={styles.novedadFila}>
+              <Ionicons name={n.icono} size={18} color="#a5b4fc" />
+              <Text style={styles.novedadTexto}>{n.texto}</Text>
             </View>
-            <Ionicons name="chevron-forward" size={18} color="#ffffff" />
-          </LinearGradient>
-        </Pressable>
+          ))}
+        </View>
       </ScrollView>
     </View>
   );
@@ -172,35 +357,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  hero: {
-    paddingHorizontal: Spacing.four,
-    paddingBottom: Spacing.four,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
-    overflow: 'hidden',
-    position: 'relative',
-  },
-  decorContainer: {
-    ...StyleSheet.absoluteFill,
-  },
-  decorIcon: {
-    position: 'absolute',
-    opacity: 0.08,
-    transform: [{ rotate: '-12deg' }],
-  },
-  decorNumber: {
-    position: 'absolute',
-    color: '#ffffff',
-    fontSize: 56,
-    fontWeight: '800',
-    opacity: 0.07,
-    letterSpacing: -2,
-  },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: Spacing.four,
   },
   brandRow: {
     flexDirection: 'row',
@@ -208,17 +368,16 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   brandMark: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
+    width: 36,
+    height: 36,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
   brandMarkText: {
     color: '#ffffff',
-    fontSize: 13,
+    fontSize: 17,
     fontWeight: '800',
-    letterSpacing: -0.5,
   },
   brandText: {
     color: '#ffffff',
@@ -227,35 +386,77 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
   },
   iconBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(255,255,255,0.08)',
   },
-  greetingBlock: {
-    marginBottom: Spacing.three,
+  banner: {
+    borderRadius: 20,
+    padding: 18,
+    minHeight: 140,
+    justifyContent: 'space-between',
+    overflow: 'hidden',
   },
-  greetingTitle: {
+  bannerDecor: {
+    position: 'absolute',
+    opacity: 0.9,
+  },
+  bannerTextCol: {
+    maxWidth: '62%',
+    gap: 6,
+  },
+  bannerTitle: {
     color: '#ffffff',
-    fontSize: 32,
+    fontSize: 19,
     fontWeight: '800',
-    letterSpacing: -0.8,
-    marginBottom: 4,
+    letterSpacing: -0.4,
+    lineHeight: 24,
   },
-  greetingSubtitle: {
+  bannerTitleAccent: {
+    color: '#a78bfa',
+    fontWeight: '800',
+  },
+  bannerSubtitle: {
     color: '#cbd5e1',
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  bannerBtn: {
+    alignSelf: 'flex-end',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    backgroundColor: '#7c3aed',
+    borderRadius: 999,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+  },
+  bannerBtnText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  dotsRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: -Spacing.two,
+  },
+  dot: {
+    height: 6,
+    borderRadius: 3,
   },
   searchPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: 'rgba(255,255,255,0.06)',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
+    borderColor: 'rgba(255,255,255,0.10)',
     borderRadius: 999,
     paddingHorizontal: 16,
     paddingVertical: 10,
@@ -290,16 +491,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    padding: 14,
+    paddingHorizontal: 14,
+    height: 84,
     borderRadius: 14,
     borderWidth: 1,
   },
   cardIcon: {
-    width: 42,
-    height: 42,
-    borderRadius: 10,
+    width: 46,
+    height: 46,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
   },
   cardTextCol: {
     flex: 1,
@@ -314,39 +517,43 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
   },
-  premiumWrap: {
-    borderRadius: 16,
-    overflow: 'hidden',
+  novedades: {
     marginTop: Spacing.two,
-    shadowColor: '#4f46e5',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 8,
+    padding: 16,
+    gap: 12,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(129,140,248,0.30)',
+    backgroundColor: 'rgba(99,102,241,0.10)',
   },
-  premium: {
+  novedadesHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    padding: 16,
+    gap: 10,
   },
-  premiumIconBg: {
-    width: 36,
-    height: 36,
+  novedadesIcono: {
+    width: 34,
+    height: 34,
     borderRadius: 10,
-    backgroundColor: 'rgba(255,255,255,0.18)',
+    backgroundColor: 'rgba(251,191,36,0.15)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  premiumTitle: {
+  novedadesTitulo: {
     color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '700',
-    marginBottom: 2,
+    fontSize: 15,
+    fontWeight: '800',
     letterSpacing: -0.2,
   },
-  premiumSubtitle: {
-    color: 'rgba(255,255,255,0.85)',
-    fontSize: 11,
+  novedadFila: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingLeft: 4,
+  },
+  novedadTexto: {
+    color: '#cbd5e1',
+    fontSize: 13,
+    fontWeight: '500',
   },
 });
