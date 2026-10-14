@@ -137,7 +137,7 @@ export default function CalculadorasScreen() {
         ) : (
           filtradas.map((calc) => {
             const disponible = calc.ruta !== null;
-            const estilo = ESTILO_CARD[calc.id];
+            const estilo = ESTILO_CARD[calc.id] ?? { icono: calc.icono, color: calc.colorIcon };
             return (
               <Pressable
                 key={calc.id}

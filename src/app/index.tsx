@@ -274,7 +274,7 @@ export default function HomeScreen() {
         <View style={{ gap: 10 }}>
           {PRINCIPALES.map((calc, i) => {
             const disponible = calc.ruta !== null;
-            const estilo = ESTILO_CARD[calc.id];
+            const estilo = ESTILO_CARD[calc.id] ?? { icono: calc.icono, color: calc.colorIcon };
             return (
               <View key={calc.id} style={{ gap: 10 }}>
                 <Pressable
