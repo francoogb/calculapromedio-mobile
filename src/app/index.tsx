@@ -272,7 +272,7 @@ export default function HomeScreen() {
         </View>
 
         <View style={{ gap: 10 }}>
-          {PRINCIPALES.map((calc) => {
+          {PRINCIPALES.map((calc, i) => {
             const disponible = calc.ruta !== null;
             const estilo = ESTILO_CARD[calc.id];
             return (
@@ -305,6 +305,30 @@ export default function HomeScreen() {
                   </View>
                   <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
                 </Pressable>
+
+                {i === 0 && (
+                  <Pressable
+                    onPress={() => router.push('/resolver-foto')}
+                    style={({ pressed }) => [
+                      styles.card,
+                      {
+                        backgroundColor: colors.surface,
+                        borderColor: colors.border,
+                        opacity: pressed ? 0.85 : 1,
+                      },
+                    ]}>
+                    <View style={[styles.cardIcon, { backgroundColor: '#3b82f62e', borderColor: '#3b82f659' }]}>
+                      <Ionicons name="camera" size={22} color="#3b82f6" />
+                    </View>
+                    <View style={styles.cardTextCol}>
+                      <Text style={[styles.cardTitle, { color: colors.text }]}>Resolver con foto</Text>
+                      <Text style={[styles.cardDesc, { color: colors.textMuted }]} numberOfLines={2}>
+                        Saca una foto a un ejercicio y obtén la solución paso a paso.
+                      </Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+                  </Pressable>
+                )}
               </View>
             );
           })}
