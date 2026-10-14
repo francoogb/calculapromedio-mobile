@@ -13,7 +13,7 @@ import {
   Seccion,
 } from '@/components/calculadora/piezas';
 import { DetalleCalculo, TarjetaResultado } from '@/components/calculadora/resultado';
-import { Acento, Colors, Spacing } from '@/constants/theme';
+import { Acento, Colors, ContenidoCentrado, Spacing } from '@/constants/theme';
 import { media, suma } from '@/lib/estadistica';
 import { fmtNumero } from '@/lib/matematica';
 import { guardarEnHistorial } from '@/lib/storage';
@@ -89,7 +89,7 @@ export default function VarianzaScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView
           ref={scrollRef}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, ContenidoCentrado]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}>
 

@@ -20,7 +20,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Onboarding } from '@/components/onboarding';
 import { ESTILO_CARD, getCalculadora, type Calculadora } from '@/constants/calculadoras';
-import { Colors, Spacing } from '@/constants/theme';
+import { Colors, ContenidoCentrado, Spacing } from '@/constants/theme';
 import { getOnboardingVisto } from '@/lib/storage';
 
 /** Calculadoras destacadas en el home (nombre/descripción/ruta vienen del catálogo único). */
@@ -147,6 +147,7 @@ export default function HomeScreen() {
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{
+          ...ContenidoCentrado,
           paddingHorizontal: Spacing.four,
           paddingTop: insets.top + Spacing.three,
           paddingBottom: Spacing.four,

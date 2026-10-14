@@ -14,7 +14,7 @@ import {
   Seccion,
 } from '@/components/calculadora/piezas';
 import { DetalleCalculo, TarjetaResultado } from '@/components/calculadora/resultado';
-import { Acento, Colors, Spacing } from '@/constants/theme';
+import { Acento, Colors, ContenidoCentrado, Spacing } from '@/constants/theme';
 import { ordenar, percentil, posicionPercentil } from '@/lib/estadistica';
 import { fmtNumero, leerNumero } from '@/lib/matematica';
 import { guardarEnHistorial } from '@/lib/storage';
@@ -98,7 +98,7 @@ export default function CuartilesScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView
           ref={scrollRef}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, ContenidoCentrado]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}>
 

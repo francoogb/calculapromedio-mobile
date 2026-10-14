@@ -5,7 +5,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
-import { Colors } from '@/constants/theme';
+import { Colors, MaxContentWidth } from '@/constants/theme';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -30,6 +30,10 @@ function AppTabs() {
           height: tabBarHeight,
           paddingTop: 6,
           paddingBottom: Math.max(insets.bottom, 8),
+          alignSelf: 'center',
+          width: '100%',
+          maxWidth: MaxContentWidth,
+          marginHorizontal: 'auto',
         },
         tabBarLabelStyle: {
           fontSize: 11,

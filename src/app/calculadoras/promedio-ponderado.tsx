@@ -22,7 +22,7 @@ import {
   Seccion,
 } from '@/components/calculadora/piezas';
 import { DetalleCalculo, TarjetaResultado } from '@/components/calculadora/resultado';
-import { Acento, Colors, Spacing } from '@/constants/theme';
+import { Acento, Colors, ContenidoCentrado, Spacing } from '@/constants/theme';
 import { guardarEnHistorial } from '@/lib/storage';
 
 const CALC_ID = 'promedio-ponderado';
@@ -180,7 +180,7 @@ export default function PromedioPonderadoScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView
           ref={scrollRef}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, ContenidoCentrado]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}>
 

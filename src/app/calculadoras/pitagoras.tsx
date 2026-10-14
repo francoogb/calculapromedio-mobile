@@ -13,7 +13,7 @@ import {
   Seccion,
 } from '@/components/calculadora/piezas';
 import { DetalleCalculo, TarjetaResultado } from '@/components/calculadora/resultado';
-import { Acento, Colors, Spacing } from '@/constants/theme';
+import { Acento, Colors, ContenidoCentrado, Spacing } from '@/constants/theme';
 import { fmtNumero, leerNumero } from '@/lib/matematica';
 import { guardarEnHistorial } from '@/lib/storage';
 
@@ -131,7 +131,7 @@ export default function PitagorasScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView
           ref={scrollRef}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, ContenidoCentrado]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}>
 

@@ -17,7 +17,7 @@ import {
   TONOS,
   type Tono,
 } from '@/components/calculadora/resultado';
-import { Colors, Spacing } from '@/constants/theme';
+import { Colors, ContenidoCentrado, Spacing } from '@/constants/theme';
 import { guardarEnHistorial } from '@/lib/storage';
 
 const CALC_ID = 'asistencia';
@@ -144,7 +144,7 @@ export default function AsistenciaScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView
           ref={scrollRef}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, ContenidoCentrado]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}>
 

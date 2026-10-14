@@ -123,7 +123,16 @@ export const Spacing = {
 } as const;
 
 export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
-export const MaxContentWidth = 800;
+
+/** Ancho máximo del contenido en tablets (portrait): centra y acota el texto. */
+export const MaxContentWidth = 680;
+
+/** Estilo para acotar y centrar una columna de contenido (usable en contentContainerStyle). */
+export const ContenidoCentrado = {
+  width: '100%',
+  maxWidth: MaxContentWidth,
+  alignSelf: 'center',
+} as const;
 
 /**
  * Acento único dentro de las calculadoras.

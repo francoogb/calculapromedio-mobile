@@ -17,7 +17,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Colors, Spacing } from '@/constants/theme';
+import { Colors, ContenidoCentrado, MaxContentWidth, Spacing } from '@/constants/theme';
 import { getFavoritos, getHistorial } from '@/lib/storage';
 import {
   getDiasDeUso,
@@ -106,25 +106,27 @@ export default function PerfilScreen() {
 
       {/* TOP BAR: Logo + CalculaPromedio + Settings */}
       <View style={[styles.topBar, { paddingTop: insets.top + Spacing.two }]}>
-        <View style={styles.brandGroup}>
-          <Image
-            source={require('../../assets/images/icon1.png')}
-            style={styles.logoMark}
-            resizeMode="contain"
-          />
-          <Text style={styles.brandTitle}>CalculaPromedio</Text>
-        </View>
+        <View style={styles.topBarContenido}>
+          <View style={styles.brandGroup}>
+            <Image
+              source={require('../../assets/images/icon1.png')}
+              style={styles.logoMark}
+              resizeMode="contain"
+            />
+            <Text style={styles.brandTitle}>CalculaPromedio</Text>
+          </View>
 
-        <Pressable
-          onPress={() => setModalPlanesVisible(true)}
-          hitSlop={8}
-          style={({ pressed }) => [styles.settingsBtn, { opacity: pressed ? 0.7 : 1 }]}>
-          <Ionicons name="settings-outline" size={22} color="#ffffff" />
-        </Pressable>
+          <Pressable
+            onPress={() => setModalPlanesVisible(true)}
+            hitSlop={8}
+            style={({ pressed }) => [styles.settingsBtn, { opacity: pressed ? 0.7 : 1 }]}>
+            <Ionicons name="settings-outline" size={22} color="#ffffff" />
+          </Pressable>
+        </View>
       </View>
 
       <ScrollView
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: 100 }]}
+        contentContainerStyle={[styles.scrollContent, ContenidoCentrado, { paddingBottom: 100 }]}
         showsVerticalScrollIndicator={false}>
         {/* HERO CARD DE PERFIL */}
         <LinearGradient
@@ -420,11 +422,16 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   topBar: {
+    paddingBottom: Spacing.two,
+  },
+  topBarContenido: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    width: '100%',
+    maxWidth: MaxContentWidth,
+    alignSelf: 'center',
     paddingHorizontal: Spacing.four,
-    paddingBottom: Spacing.two,
   },
   brandGroup: {
     flexDirection: 'row',

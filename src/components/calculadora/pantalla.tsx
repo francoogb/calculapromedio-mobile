@@ -10,7 +10,7 @@ import {
 
 import { HeaderCalculadora } from '@/components/calculadora/header-calculadora';
 import { BarraAcciones } from '@/components/calculadora/piezas';
-import { Colors, Spacing } from '@/constants/theme';
+import { Colors, ContenidoCentrado, Spacing } from '@/constants/theme';
 import { guardarEnHistorial } from '@/lib/storage';
 
 const colors = Colors.dark;
@@ -79,7 +79,7 @@ export function PantallaCalculadora({
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView
           ref={scrollRef}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, ContenidoCentrado]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}>
           {children}

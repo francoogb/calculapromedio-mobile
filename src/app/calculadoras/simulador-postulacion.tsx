@@ -20,7 +20,7 @@ import {
   Seccion,
 } from '@/components/calculadora/piezas';
 import { TarjetaResultado, TONOS, type Tono } from '@/components/calculadora/resultado';
-import { Acento, Colors, Spacing } from '@/constants/theme';
+import { Acento, Colors, ContenidoCentrado, Spacing } from '@/constants/theme';
 import { CARRERAS, type Carrera } from '@/lib/carreras';
 import { leerNumero } from '@/lib/matematica';
 import { guardarEnHistorial } from '@/lib/storage';
@@ -166,7 +166,7 @@ export default function SimuladorPostulacionScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView
           ref={scrollRef}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, ContenidoCentrado]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}>
 

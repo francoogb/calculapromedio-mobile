@@ -12,7 +12,7 @@ import {
   Seccion,
 } from '@/components/calculadora/piezas';
 import { DetalleCalculo, TarjetaResultado, TONOS, type Tono } from '@/components/calculadora/resultado';
-import { Colors, Spacing } from '@/constants/theme';
+import { Colors, ContenidoCentrado, Spacing } from '@/constants/theme';
 import { leerEntero } from '@/lib/matematica';
 import { guardarEnHistorial } from '@/lib/storage';
 import { TABLAS_PAES, type PruebaPAES } from '@/lib/tablas-paes';
@@ -114,7 +114,7 @@ export default function PuntajePaesScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView
           ref={scrollRef}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, ContenidoCentrado]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}>
 

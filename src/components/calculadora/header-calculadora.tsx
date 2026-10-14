@@ -5,7 +5,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ESTILO_CARD, getCalculadora } from '@/constants/calculadoras';
-import { Acento, Colors, Spacing } from '@/constants/theme';
+import { Acento, Colors, MaxContentWidth, Spacing } from '@/constants/theme';
 import { useFavorito } from '@/hooks/use-favorito';
 
 type Props = {
@@ -26,53 +26,60 @@ export function HeaderCalculadora({ calculadoraId }: Props) {
       <Stack.Screen options={{ headerShown: false }} />
       <StatusBar style="light" />
 
-      <Pressable
-        onPress={() => router.back()}
-        hitSlop={10}
-        style={styles.iconButton}
-        accessibilityLabel="Volver">
-        <Ionicons name="arrow-back" size={24} color={colors.text} />
-      </Pressable>
+      <View style={styles.headerContenido}>
+        <Pressable
+          onPress={() => router.back()}
+          hitSlop={10}
+          style={styles.iconButton}
+          accessibilityLabel="Volver">
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
+        </Pressable>
 
-      {icono && (
-        <View style={[styles.tile, { backgroundColor: Acento.base }]}>
-          <Ionicons name={icono} size={26} color="#ffffff" />
-        </View>
-      )}
-
-      <View style={styles.textos}>
-        <Text style={[styles.titulo, { color: colors.text }]} numberOfLines={1}>
-          {calc?.nombre ?? 'Calculadora'}
-        </Text>
-        {calc && (
-          <Text style={[styles.descripcion, { color: colors.textSecondary }]} numberOfLines={2}>
-            {calc.descripcion}.
-          </Text>
+        {icono && (
+          <View style={[styles.tile, { backgroundColor: Acento.base }]}>
+            <Ionicons name={icono} size={26} color="#ffffff" />
+          </View>
         )}
-      </View>
 
-      <Pressable
-        onPress={alternar}
-        hitSlop={10}
-        style={styles.iconButton}
-        accessibilityLabel={esFavorito ? 'Quitar de favoritos' : 'Agregar a favoritos'}>
-        <Ionicons
-          name={esFavorito ? 'heart' : 'heart-outline'}
-          size={26}
-          color={esFavorito ? '#f472b6' : colors.text}
-        />
-      </Pressable>
+        <View style={styles.textos}>
+          <Text style={[styles.titulo, { color: colors.text }]} numberOfLines={1}>
+            {calc?.nombre ?? 'Calculadora'}
+          </Text>
+          {calc && (
+            <Text style={[styles.descripcion, { color: colors.textSecondary }]} numberOfLines={2}>
+              {calc.descripcion}.
+            </Text>
+          )}
+        </View>
+
+        <Pressable
+          onPress={alternar}
+          hitSlop={10}
+          style={styles.iconButton}
+          accessibilityLabel={esFavorito ? 'Quitar de favoritos' : 'Agregar a favoritos'}>
+          <Ionicons
+            name={esFavorito ? 'heart' : 'heart-outline'}
+            size={26}
+            color={esFavorito ? '#f472b6' : colors.text}
+          />
+        </Pressable>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   header: {
+    paddingBottom: Spacing.three,
+  },
+  headerContenido: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+    width: '100%',
+    maxWidth: MaxContentWidth,
+    alignSelf: 'center',
     paddingHorizontal: Spacing.three,
-    paddingBottom: Spacing.three,
   },
   iconButton: {
     width: 40,

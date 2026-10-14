@@ -6,7 +6,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CALCULADORAS, ESTILO_CARD, getCalculadora } from '@/constants/calculadoras';
-import { Colors, Spacing } from '@/constants/theme';
+import { Colors, ContenidoCentrado, Spacing } from '@/constants/theme';
 import {
   borrarDelHistorial,
   getFavoritos,
@@ -50,8 +50,10 @@ export default function FavoritosScreen() {
       <StatusBar style="light" />
 
       <View style={[styles.hero, { paddingTop: insets.top + Spacing.two }]}>
-        <Text style={styles.heroTitulo}>Favoritos</Text>
-        <Text style={styles.heroSub}>Tus calculadoras y cálculos guardados</Text>
+        <View style={ContenidoCentrado}>
+          <Text style={styles.heroTitulo}>Favoritos</Text>
+          <Text style={styles.heroSub}>Tus calculadoras y cálculos guardados</Text>
+        </View>
       </View>
 
       {vacio ? (
@@ -71,7 +73,7 @@ export default function FavoritosScreen() {
         </View>
       ) : (
         <ScrollView
-          contentContainerStyle={styles.scroll}
+          contentContainerStyle={[styles.scroll, ContenidoCentrado, { paddingBottom: 100 }]}
           showsVerticalScrollIndicator={false}>
           {calcsFavoritas.length > 0 && (
             <>

@@ -27,7 +27,7 @@ import {
   TONOS,
   type Tono,
 } from '@/components/calculadora/resultado';
-import { Acento, Colors, Spacing } from '@/constants/theme';
+import { Acento, Colors, ContenidoCentrado, Spacing } from '@/constants/theme';
 import { guardarEnHistorial } from '@/lib/storage';
 import { puntajeNEM, redondearNEM, type GrupoNEM } from '@/lib/tablas-nem';
 
@@ -250,7 +250,7 @@ export default function NemScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView
           ref={scrollRef}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, ContenidoCentrado]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}>
 

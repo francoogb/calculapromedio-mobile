@@ -13,7 +13,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CALCULADORAS, ESTILO_CARD, type CategoriaCalculadora } from '@/constants/calculadoras';
-import { Colors, Spacing } from '@/constants/theme';
+import { Colors, ContenidoCentrado, Spacing } from '@/constants/theme';
 
 type Categoria = 'todas' | CategoriaCalculadora;
 
@@ -56,36 +56,38 @@ export default function CalculadorasScreen() {
           styles.hero,
           { backgroundColor: '#1b1844', paddingTop: insets.top + Spacing.two },
         ]}>
-        <View style={styles.heroTitleRow}>
-          <View>
-            <Text style={styles.heroTitle}>Calculadoras</Text>
-            <Text style={styles.heroSubtitle}>Todas las herramientas en un solo lugar</Text>
+        <View style={ContenidoCentrado}>
+          <View style={styles.heroTitleRow}>
+            <View>
+              <Text style={styles.heroTitle}>Calculadoras</Text>
+              <Text style={styles.heroSubtitle}>Todas las herramientas en un solo lugar</Text>
+            </View>
+            <View style={styles.heroCount}>
+              <Text style={styles.heroCountText}>{CALCULADORAS.length}</Text>
+            </View>
           </View>
-          <View style={styles.heroCount}>
-            <Text style={styles.heroCountText}>{CALCULADORAS.length}</Text>
-          </View>
-        </View>
 
-        {/* Search */}
-        <View style={styles.searchPill}>
-          <Ionicons name="search" size={18} color="#94a3b8" />
-          <TextInput
-            value={busqueda}
-            onChangeText={setBusqueda}
-            placeholder="Buscar calculadora..."
-            placeholderTextColor="#94a3b8"
-            style={styles.searchInput}
-          />
-          {busqueda.length > 0 && (
-            <Pressable onPress={() => setBusqueda('')} hitSlop={10}>
-              <Ionicons name="close-circle" size={18} color="#94a3b8" />
-            </Pressable>
-          )}
+          {/* Search */}
+          <View style={styles.searchPill}>
+            <Ionicons name="search" size={18} color="#94a3b8" />
+            <TextInput
+              value={busqueda}
+              onChangeText={setBusqueda}
+              placeholder="Buscar calculadora..."
+              placeholderTextColor="#94a3b8"
+              style={styles.searchInput}
+            />
+            {busqueda.length > 0 && (
+              <Pressable onPress={() => setBusqueda('')} hitSlop={10}>
+                <Ionicons name="close-circle" size={18} color="#94a3b8" />
+              </Pressable>
+            )}
+          </View>
         </View>
       </View>
 
       {/* Chips categorías */}
-      <View style={styles.chipsRow}>
+      <View style={[styles.chipsRow, ContenidoCentrado]}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipsContent}>
           {CATEGORIAS.map((cat) => {
             const activo = cat.id === categoria;
@@ -118,6 +120,7 @@ export default function CalculadorasScreen() {
       <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{
+          ...ContenidoCentrado,
           paddingHorizontal: Spacing.four,
           paddingTop: Spacing.two,
           paddingBottom: Spacing.four,
