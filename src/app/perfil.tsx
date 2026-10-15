@@ -3,7 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router, useFocusEffect } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as WebBrowser from 'expo-web-browser';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import {
   Alert,
   Image,
@@ -18,6 +18,8 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Colors, ContenidoCentrado, MaxContentWidth, Spacing } from '@/constants/theme';
+import { useSesion } from '@/context/sesion';
+import { ApiError } from '@/lib/api';
 import { getFavoritos, getHistorial } from '@/lib/storage';
 import {
   getDiasDeUso,
@@ -26,17 +28,20 @@ import {
   saveUserProfile,
   type UserProfile,
 } from '@/lib/user';
-
 const colors = Colors.dark;
 
 const URL_CONTACTO = 'https://calculapromedio.cl/contacto';
 
+/** Mismas opciones que el formulario de registro de la web. */
+const OPCIONES_CONOCISTE = ['Instagram', 'TikTok', 'Mi profesor', 'Buscando en Google', 'Otro'];
+
 export default function PerfilScreen() {
   const insets = useSafeAreaInsets();
+  const { usuario, cerrarSesion, eliminarCuenta, actualizarUsuario } = useSesion();
 
   const [perfil, setPerfil] = useState<UserProfile>({
     nombre: 'Estudiante',
-    email: 'estudiante@email.cl',
+    email: '',
     avatarUrl: null,
     plan: 'gratis',
     fechaRegistro: new Date().toISOString(),
@@ -52,10 +57,17 @@ export default function PerfilScreen() {
   const [nuevoNombre, setNuevoNombre] = useState('');
   const [modalPlanesVisible, setModalPlanesVisible] = useState(false);
 
+  // Datos opcionales de la cuenta (teléfono y "cómo nos conociste", decisión #1)
+  const [telefono, setTelefono] = useState('');
+  const [conociste, setConociste] = useState<string | null>(null);
+  const [guardandoDatos, setGuardandoDatos] = useState(false);
+
   const cargarDatos = useCallback(async () => {
     const p = await getUserProfile();
     setPerfil(p);
-    setNuevoNombre(p.nombre);
+    setNuevoNombre(usuario?.nombre ?? p.nombre);
+    setTelefono(usuario?.telefono ?? '');
+    setConociste(usuario?.como_nos_conociste ?? null);
 
     const favs = await getFavoritos();
     setFavoritosCount(favs.length > 0 ? favs.length : 5);
@@ -68,7 +80,7 @@ export default function PerfilScreen() {
 
     const d = await getDiasDeUso();
     setDiasUso(d);
-  }, []);
+  }, [usuario]);
 
   useFocusEffect(
     useCallback(() => {
@@ -78,9 +90,41 @@ export default function PerfilScreen() {
 
   const guardarNombre = async () => {
     if (!nuevoNombre.trim()) return;
-    const actualizado = await saveUserProfile({ nombre: nuevoNombre.trim() });
-    setPerfil(actualizado);
+    if (usuario) {
+      try {
+        await actualizarUsuario({ nombre: nuevoNombre.trim() });
+      } catch (e) {
+        Alert.alert(
+          'No se pudo guardar',
+          e instanceof ApiError ? e.message : 'Inténtalo de nuevo más tarde.'
+        );
+        return;
+      }
+    } else {
+      const actualizado = await saveUserProfile({ nombre: nuevoNombre.trim() });
+      setPerfil(actualizado);
+    }
     setModalEditarVisible(false);
+  };
+
+  /** Guarda teléfono y "cómo nos conociste" (opcionales) en la cuenta vía PATCH /me. */
+  const guardarDatosCuenta = async () => {
+    if (!usuario || guardandoDatos) return;
+    setGuardandoDatos(true);
+    try {
+      await actualizarUsuario({
+        telefono: telefono.trim() || null,
+        como_nos_conociste: conociste,
+      });
+      Alert.alert('Listo', 'Tus datos fueron guardados.');
+    } catch (e) {
+      Alert.alert(
+        'No se pudo guardar',
+        e instanceof ApiError ? e.message : 'Inténtalo de nuevo más tarde.'
+      );
+    } finally {
+      setGuardandoDatos(false);
+    }
   };
 
   const confirmarCerrarSesion = () => {
@@ -92,12 +136,58 @@ export default function PerfilScreen() {
         {
           text: 'Cerrar sesión',
           style: 'destructive',
-          onPress: () => {
+          onPress: async () => {
+            await cerrarSesion();
             Alert.alert('Sesión cerrada', 'Has cerrado sesión con éxito.');
           },
         },
       ]
     );
+  };
+
+  /** Eliminar la cuenta es irreversible: se borra en el servidor (requisito de Google Play). */
+  const confirmarEliminarCuenta = () => {
+    Alert.alert(
+      'Eliminar cuenta',
+      'Esta acción es definitiva: se eliminará tu cuenta de CalculaPromedio (web y app) y no podrás recuperarla.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Eliminar mi cuenta',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await eliminarCuenta();
+              router.replace('/');
+              Alert.alert('Cuenta eliminada', 'Tu cuenta fue eliminada con éxito.');
+            } catch (e) {
+              Alert.alert(
+                'No se pudo eliminar',
+                e instanceof ApiError ? e.message : 'Revisa tu conexión e inténtalo de nuevo.'
+              );
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  // Datos mostrados: la sesión manda si existe; si no, el perfil local de invitado
+  const nombreMostrado = usuario?.nombre ?? perfil.nombre;
+  const emailMostrado = usuario?.email ?? perfil.email;
+  const esPremium = usuario ? usuario.is_premium : perfil.plan === 'premium';
+
+  // Campana de notificaciones: avisa cuando faltan campos opcionales del perfil
+  const faltanCampos = !!usuario && (!usuario.telefono || !usuario.como_nos_conociste);
+  const scrollRef = useRef<ScrollView>(null);
+
+  /** La campana lleva al usuario a completar lo que falta; si no falta nada, lo confirma. */
+  const tocarCampana = () => {
+    if (faltanCampos) {
+      scrollRef.current?.scrollToEnd({ animated: true });
+    } else {
+      Alert.alert('Notificaciones', 'Todo al día: tu perfil está completo.');
+    }
   };
 
   return (
@@ -117,15 +207,19 @@ export default function PerfilScreen() {
           </View>
 
           <Pressable
-            onPress={() => setModalPlanesVisible(true)}
+            onPress={tocarCampana}
             hitSlop={8}
             style={({ pressed }) => [styles.settingsBtn, { opacity: pressed ? 0.7 : 1 }]}>
-            <Ionicons name="settings-outline" size={22} color="#ffffff" />
+            <View>
+              <Ionicons name="notifications-outline" size={22} color="#ffffff" />
+              {faltanCampos && <View style={styles.badgeCampana} />}
+            </View>
           </Pressable>
         </View>
       </View>
 
       <ScrollView
+        ref={scrollRef}
         contentContainerStyle={[styles.scrollContent, ContenidoCentrado, { paddingBottom: 100 }]}
         showsVerticalScrollIndicator={false}>
         {/* HERO CARD DE PERFIL */}
@@ -140,7 +234,11 @@ export default function PerfilScreen() {
             {/* Avatar con botón de cámara */}
             <View style={styles.avatarWrapper}>
               <View style={styles.avatarCircle}>
-                <Ionicons name="person" size={42} color="#c7d2fe" />
+                {usuario?.avatar ? (
+                  <Image source={{ uri: usuario.avatar }} style={styles.avatarImagen} resizeMode="cover" />
+                ) : (
+                  <Ionicons name="person" size={42} color="#c7d2fe" />
+                )}
               </View>
               <Pressable
                 onPress={() => Alert.alert('Cambiar foto', 'Pronto podrás subir tu foto de perfil personalizada.')}
@@ -155,18 +253,16 @@ export default function PerfilScreen() {
               <Pressable
                 onPress={() => setModalEditarVisible(true)}
                 style={styles.nameRow}>
-                <Text style={styles.userName}>{perfil.nombre}</Text>
+                <Text style={styles.userName}>{nombreMostrado}</Text>
                 <Ionicons name="pencil" size={14} color="#94a3b8" />
               </Pressable>
 
-              <Text style={styles.userEmail}>{perfil.email}</Text>
+              {emailMostrado ? <Text style={styles.userEmail}>{emailMostrado}</Text> : null}
 
               {/* Badge de Plan */}
               <View style={styles.planBadge}>
                 <Ionicons name="sparkles" size={12} color="#facc15" />
-                <Text style={styles.planBadgeText}>
-                  {perfil.plan === 'premium' ? 'Plan Premium' : 'Plan Gratis'}
-                </Text>
+                <Text style={styles.planBadgeText}>{esPremium ? 'Plan Premium' : 'Plan Gratis'}</Text>
               </View>
             </View>
 
@@ -229,11 +325,9 @@ export default function PerfilScreen() {
 
           <View style={styles.planTextCol}>
             <Text style={styles.planTag}>TU PLAN ACTUAL</Text>
-            <Text style={styles.planTitle}>
-              {perfil.plan === 'premium' ? 'Plan Premium Activo' : 'Plan Gratis'}
-            </Text>
+            <Text style={styles.planTitle}>{esPremium ? 'Plan Premium Activo' : 'Plan Gratis'}</Text>
             <Text style={styles.planSub}>
-              {perfil.plan === 'premium'
+              {esPremium
                 ? 'Acceso total e ilimitado a todas las herramientas.'
                 : 'Accede a funciones básicas de la app.'}
             </Text>
@@ -312,18 +406,109 @@ export default function PerfilScreen() {
             </Pressable>
           </View>
 
-          {/* Botón Cerrar Sesión */}
-          <Pressable
-            onPress={confirmarCerrarSesion}
-            style={({ pressed }) => [
-              styles.logoutCard,
-              { opacity: pressed ? 0.8 : 1 },
-            ]}>
-            <View style={styles.logoutIconBox}>
-              <Ionicons name="log-out" size={20} color="#ef4444" />
+          {/* Datos opcionales de la cuenta: cada campo se oculta al completarse */}
+          {usuario && (!usuario.telefono || !usuario.como_nos_conociste) && (
+            <View style={styles.completarCard}>
+              <Text style={styles.sectionHeaderTitle}>Completa tu perfil (opcional)</Text>
+
+              {!usuario.telefono && (
+                <TextInput
+                  value={telefono}
+                  onChangeText={setTelefono}
+                  placeholder="Teléfono"
+                  placeholderTextColor="#64748b"
+                  keyboardType="phone-pad"
+                  style={styles.campoPerfil}
+                />
+              )}
+
+              {!usuario.como_nos_conociste && (
+                <>
+                  <Text style={styles.labelConociste}>¿Cómo nos conociste?</Text>
+                  <View style={styles.chipsRow}>
+                    {OPCIONES_CONOCISTE.map((opcion) => {
+                      const activo = conociste === opcion;
+                      return (
+                        <Pressable
+                          key={opcion}
+                          onPress={() => setConociste(activo ? null : opcion)}
+                          style={[styles.chip, activo && styles.chipActivo]}>
+                          <Text style={[styles.chipTexto, activo && styles.chipTextoActivo]}>
+                            {opcion}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                </>
+              )}
+
+              <Pressable
+                onPress={guardarDatosCuenta}
+                disabled={guardandoDatos}
+                style={({ pressed }) => [
+                  styles.guardarBtn,
+                  { opacity: guardandoDatos ? 0.6 : pressed ? 0.85 : 1 },
+                ]}>
+                <Text style={styles.guardarBtnTexto}>
+                  {guardandoDatos ? 'Guardando…' : 'Guardar datos'}
+                </Text>
+              </Pressable>
             </View>
-            <Text style={styles.logoutText}>Cerrar sesión</Text>
-          </Pressable>
+          )}
+
+          {usuario ? (
+            <>
+              {/* Botón Cerrar Sesión */}
+              <Pressable
+                onPress={confirmarCerrarSesion}
+                style={({ pressed }) => [
+                  styles.logoutCard,
+                  { opacity: pressed ? 0.8 : 1 },
+                ]}>
+                <View style={styles.logoutIconBox}>
+                  <Ionicons name="log-out" size={20} color="#ef4444" />
+                </View>
+                <Text style={styles.logoutText}>Cerrar sesión</Text>
+              </Pressable>
+
+              {/* Botón Eliminar Cuenta */}
+              <Pressable
+                onPress={confirmarEliminarCuenta}
+                style={({ pressed }) => [
+                  styles.logoutCard,
+                  { opacity: pressed ? 0.8 : 1 },
+                ]}>
+                <View style={styles.logoutIconBox}>
+                  <Ionicons name="trash" size={20} color="#ef4444" />
+                </View>
+                <Text style={styles.logoutText}>Eliminar mi cuenta</Text>
+              </Pressable>
+            </>
+          ) : (
+            <>
+              {/* Invitado: entrada a la cuenta */}
+              <Pressable
+                onPress={() => router.push('/login')}
+                style={({ pressed }) => [styles.loginCard, { opacity: pressed ? 0.85 : 1 }]}>
+                <View style={styles.loginIconBox}>
+                  <Ionicons name="person" size={20} color="#ffffff" />
+                </View>
+                <Text style={styles.loginText}>Iniciar sesión</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => router.push('/registro')}
+                style={({ pressed }) => [
+                  styles.logoutCard,
+                  { opacity: pressed ? 0.8 : 1 },
+                ]}>
+                <View style={styles.loginIconBoxCrear}>
+                  <Ionicons name="person-add" size={20} color="#a78bfa" />
+                </View>
+                <Text style={styles.loginTextCrear}>Crear cuenta gratis</Text>
+              </Pressable>
+            </>
+          )}
         </View>
       </ScrollView>
 
@@ -457,6 +642,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.06)',
   },
+  badgeCampana: {
+    position: 'absolute',
+    top: 2,
+    right: 2,
+    width: 9,
+    height: 9,
+    borderRadius: 5,
+    backgroundColor: '#ef4444',
+    borderWidth: 1.5,
+    borderColor: '#060919',
+  },
   scrollContent: {
     paddingHorizontal: Spacing.four,
     paddingTop: Spacing.two,
@@ -509,6 +705,11 @@ const styles = StyleSheet.create({
     borderColor: '#090d24',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  avatarImagen: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
   },
   userInfoCol: {
     flex: 1,
@@ -716,6 +917,100 @@ const styles = StyleSheet.create({
   },
   logoutText: {
     color: '#ef4444',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  loginCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 14,
+    backgroundColor: '#4f46e5',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    marginTop: 4,
+  },
+  loginIconBox: {
+    width: 38,
+    height: 38,
+    borderRadius: 11,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loginText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  loginIconBoxCrear: {
+    width: 38,
+    height: 38,
+    borderRadius: 11,
+    backgroundColor: 'rgba(167, 139, 250, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loginTextCrear: {
+    color: '#a78bfa',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  completarCard: {
+    gap: 10,
+    marginTop: 4,
+  },
+  campoPerfil: {
+    height: 48,
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    color: '#ffffff',
+    fontSize: 15,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  labelConociste: {
+    color: colors.textSecondary,
+    fontSize: 13,
+    fontWeight: '600',
+    marginLeft: 2,
+  },
+  chipsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  chip: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  chipActivo: {
+    backgroundColor: 'rgba(99, 102, 241, 0.25)',
+    borderColor: '#6366f1',
+  },
+  chipTexto: {
+    color: '#94a3b8',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  chipTextoActivo: {
+    color: '#ffffff',
+  },
+  guardarBtn: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 46,
+    borderRadius: 12,
+    backgroundColor: '#4f46e5',
+  },
+  guardarBtnTexto: {
+    color: '#ffffff',
     fontSize: 14,
     fontWeight: '700',
   },

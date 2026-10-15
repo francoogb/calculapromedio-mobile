@@ -30,7 +30,7 @@ export function HeaderCalculadora({ calculadoraId }: Props) {
         <Pressable
           onPress={() => router.back()}
           hitSlop={10}
-          style={styles.iconButton}
+          style={({ pressed }) => [styles.iconButton, { opacity: pressed ? 0.6 : 1 }]}
           accessibilityLabel="Volver">
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </Pressable>
@@ -55,7 +55,7 @@ export function HeaderCalculadora({ calculadoraId }: Props) {
         <Pressable
           onPress={alternar}
           hitSlop={10}
-          style={styles.iconButton}
+          style={({ pressed }) => [styles.iconButton, { opacity: pressed ? 0.6 : 1 }]}
           accessibilityLabel={esFavorito ? 'Quitar de favoritos' : 'Agregar a favoritos'}>
           <Ionicons
             name={esFavorito ? 'heart' : 'heart-outline'}
@@ -82,10 +82,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.three,
   },
   iconButton: {
-    width: 40,
-    height: 40,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.08)',
   },
   tile: {
     width: 52,

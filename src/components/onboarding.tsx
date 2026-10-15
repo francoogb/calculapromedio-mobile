@@ -19,7 +19,10 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Colors, Spacing } from '@/constants/theme';
+import { useSesion } from '@/context/sesion';
+import { ApiError } from '@/lib/api';
 import { marcarOnboardingVisto } from '@/lib/storage';
+import { esCorreoValido, sugerirCorreo } from '@/lib/validacion';
 
 type Slider = {
   id: string;
@@ -62,12 +65,15 @@ const SLIDERS: Slider[] = [
 export function Onboarding({ onListo }: { onListo: () => void }) {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
+  const { iniciarSesion } = useSesion();
   const pagerRef = useRef<ScrollView>(null);
   const [paginaActiva, setPaginaActiva] = useState(0);
   const [mostrarLogin, setMostrarLogin] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [mensajeLogin, setMensajeLogin] = useState<string | null>(null);
+  const [cargandoLogin, setCargandoLogin] = useState(false);
+  const [mostrarPass, setMostrarPass] = useState(false);
 
   const esUltima = paginaActiva === SLIDERS.length - 1;
 
@@ -85,8 +91,36 @@ export function Onboarding({ onListo }: { onListo: () => void }) {
     router.replace('/');
   }
 
-  function enviarLogin() {
-    setMensajeLogin('El inicio de sesión se habilitará próximamente.');
+  async function enviarLogin() {
+    if (cargandoLogin) return;
+    setMensajeLogin(null);
+    const correo = email.trim();
+    if (!correo || !password) {
+      setMensajeLogin('Ingresa tu correo y tu contraseña.');
+      return;
+    }
+    if (!esCorreoValido(correo)) {
+      const sugerencia = sugerirCorreo(correo);
+      if (sugerencia) {
+        // Dominio con typo probable: corregirlo en el campo y pedir confirmación
+        setEmail(sugerencia);
+        setMensajeLogin(`¿Tenías un error de tipeo? Corregimos el dominio a ${sugerencia}. Revisa y vuelve a intentar.`);
+      } else {
+        setMensajeLogin('La dirección de correo no parece válida. Revisa que el dominio exista (ej: nombre@correo.com).');
+      }
+      return;
+    }
+    setCargandoLogin(true);
+    try {
+      await iniciarSesion({ email: correo, password });
+      await terminar();
+    } catch (e) {
+      setMensajeLogin(
+        e instanceof ApiError ? e.message : 'Ocurrió un error inesperado. Inténtalo de nuevo.'
+      );
+    } finally {
+      setCargandoLogin(false);
+    }
   }
 
   return (
@@ -209,19 +243,41 @@ export function Onboarding({ onListo }: { onListo: () => void }) {
                 autoCapitalize="none"
                 style={[styles.input, { borderColor: Colors.dark.border, color: Colors.dark.text }]}
               />
-              <TextInput
-                value={password}
-                onChangeText={setPassword}
-                placeholder="Contraseña"
-                placeholderTextColor="#94a3b8"
-                secureTextEntry
-                style={[styles.input, { borderColor: Colors.dark.border, color: Colors.dark.text }]}
-              />
+              <View>
+                <TextInput
+                  value={password}
+                  onChangeText={setPassword}
+                  placeholder="Contraseña"
+                  placeholderTextColor="#94a3b8"
+                  secureTextEntry={!mostrarPass}
+                  returnKeyType="done"
+                  onSubmitEditing={enviarLogin}
+                  style={[
+                    styles.input,
+                    { borderColor: Colors.dark.border, color: Colors.dark.text, paddingRight: 44 },
+                  ]}
+                />
+                <Pressable
+                  onPress={() => setMostrarPass((v) => !v)}
+                  hitSlop={10}
+                  accessibilityLabel={mostrarPass ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                  style={styles.ojoBtnModal}>
+                  <Ionicons
+                    name={mostrarPass ? 'eye-off-outline' : 'eye-outline'}
+                    size={20}
+                    color="#94a3b8"
+                  />
+                </Pressable>
+              </View>
 
               <Pressable
                 onPress={enviarLogin}
-                style={({ pressed }) => [styles.boton, { opacity: pressed ? 0.92 : 1, backgroundColor: '#4f46e5' }]}>
-                <Text style={styles.botonTexto}>Iniciar sesión</Text>
+                disabled={cargandoLogin}
+                style={({ pressed }) => [
+                  styles.boton,
+                  { opacity: cargandoLogin ? 0.6 : pressed ? 0.92 : 1, backgroundColor: '#4f46e5' },
+                ]}>
+                <Text style={styles.botonTexto}>{cargandoLogin ? 'Iniciando sesión…' : 'Iniciar sesión'}</Text>
               </Pressable>
 
               {mensajeLogin && (
@@ -485,6 +541,14 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     fontSize: 14,
   },
+  ojoBtnModal: {
+    position: 'absolute',
+    right: 12,
+    top: 0,
+    bottom: 0,
+    justifyContent: 'center',
+  },
+
   modalMensaje: {
     fontSize: 12,
     textAlign: 'center',

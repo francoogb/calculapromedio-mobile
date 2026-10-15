@@ -1,5 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { DarkTheme, ThemeProvider } from 'expo-router';
+import { DarkTheme, router, ThemeProvider } from 'expo-router';
 import { Tabs } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as SplashScreen from 'expo-splash-screen';
@@ -8,6 +8,7 @@ import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-cont
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { Colors, MaxContentWidth } from '@/constants/theme';
+import { SesionProvider } from '@/context/sesion';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -74,6 +75,13 @@ function AppTabs() {
       />
       <Tabs.Screen
         name="calculadoras"
+        listeners={() => ({
+          tabPress: (e) => {
+            // El tab siempre lleva al listado completo, no a la última calculadora abierta
+            e.preventDefault();
+            router.navigate('/calculadoras');
+          },
+        })}
         options={{
           title: 'Calculadoras',
           tabBarIcon: ({ color, focused, size }) => (
@@ -107,6 +115,16 @@ function AppTabs() {
           ),
         }}
       />
+      {/* Pantallas de cuenta (login, registro): stack propio sin tab bar ni botón en la barra */}
+      <Tabs.Screen
+        name="(auth)"
+        options={{
+          headerShown: false,
+          // href null: no aparece como sexto tab; display none: se oculta la barra al estar ahí
+          href: null,
+          tabBarStyle: { display: 'none' },
+        }}
+      />
     </Tabs>
   );
 }
@@ -136,8 +154,10 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <ThemeProvider value={DarkTheme}>
-        <AnimatedSplashOverlay />
-        <AppTabs />
+        <SesionProvider>
+          <AnimatedSplashOverlay />
+          <AppTabs />
+        </SesionProvider>
       </ThemeProvider>
     </SafeAreaProvider>
   );

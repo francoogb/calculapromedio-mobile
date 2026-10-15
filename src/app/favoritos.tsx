@@ -113,11 +113,16 @@ export default function FavoritosScreen() {
               {historial.map((entrada) => {
                 const calc = getCalculadora(entrada.calculadoraId);
                 return (
-                  <View
+                  <Pressable
                     key={entrada.id}
-                    style={[
+                    onPress={() => calc?.ruta && router.push(calc.ruta)}
+                    style={({ pressed }) => [
                       styles.card,
-                      { backgroundColor: colors.surface, borderColor: colors.border },
+                      {
+                        backgroundColor: colors.surface,
+                        borderColor: colors.border,
+                        opacity: pressed ? 0.9 : 1,
+                      },
                     ]}>
                     <View style={{ flex: 1 }}>
                       <Text style={[styles.cardTitulo, { color: colors.text }]}>
@@ -137,7 +142,7 @@ export default function FavoritosScreen() {
                       style={styles.borrar}>
                       <Ionicons name="close" size={18} color={colors.textMuted} />
                     </Pressable>
-                  </View>
+                  </Pressable>
                 );
               })}
             </>
