@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { CampanaNotificaciones } from '@/components/notificaciones/campana';
 import { Colors, Spacing } from '@/constants/theme';
 
 /** Pantalla "Resolver con foto": captura o elige una foto del ejercicio.
@@ -78,7 +79,7 @@ export default function ResolverFotoScreen() {
           <Ionicons name="arrow-back" size={20} color={colors.text} />
         </Pressable>
         <Text style={[styles.headerTitle, { color: colors.text }]}>Resolver con foto</Text>
-        <View style={styles.backBtn} />
+        <CampanaNotificaciones />
       </View>
 
       <ScrollView

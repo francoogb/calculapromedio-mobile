@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { CampanaNotificaciones } from '@/components/notificaciones/campana';
 import { CALCULADORAS, ESTILO_CARD, type CategoriaCalculadora } from '@/constants/calculadoras';
 import { Colors, ContenidoCentrado, Spacing } from '@/constants/theme';
 
@@ -62,8 +63,11 @@ export default function CalculadorasScreen() {
               <Text style={styles.heroTitle}>Calculadoras</Text>
               <Text style={styles.heroSubtitle}>Todas las herramientas en un solo lugar</Text>
             </View>
-            <View style={styles.heroCount}>
-              <Text style={styles.heroCountText}>{CALCULADORAS.length}</Text>
+            <View style={styles.heroLadoDerecho}>
+              <View style={styles.heroCount}>
+                <Text style={styles.heroCountText}>{CALCULADORAS.length}</Text>
+              </View>
+              <CampanaNotificaciones />
             </View>
           </View>
 
@@ -209,6 +213,11 @@ const styles = StyleSheet.create({
     color: '#cbd5e1',
     fontSize: 13,
     marginTop: 2,
+  },
+  heroLadoDerecho: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
   heroCount: {
     paddingHorizontal: 12,

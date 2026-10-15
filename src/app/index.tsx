@@ -19,6 +19,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Onboarding } from '@/components/onboarding';
+import { CampanaNotificaciones } from '@/components/notificaciones/campana';
 import { ESTILO_CARD, getCalculadora, type Calculadora } from '@/constants/calculadoras';
 import { Colors, ContenidoCentrado, Spacing } from '@/constants/theme';
 import { getOnboardingVisto } from '@/lib/storage';
@@ -154,7 +155,7 @@ export default function HomeScreen() {
           gap: Spacing.three,
         }}
         showsVerticalScrollIndicator={false}>
-        {/* Header compacto: logo + nombre + settings */}
+        {/* Header compacto: logo + nombre + notificaciones */}
         <View style={styles.headerRow}>
           <View style={styles.brandRow}>
             <Image
@@ -165,12 +166,7 @@ export default function HomeScreen() {
             <Text style={styles.brandText}>CalculaPromedio</Text>
           </View>
 
-          <Pressable
-            onPress={() => {}}
-            hitSlop={10}
-            style={({ pressed }) => [styles.iconBtn, { opacity: pressed ? 0.6 : 1 }]}>
-            <Ionicons name="settings-outline" size={22} color="#ffffff" />
-          </Pressable>
+          <CampanaNotificaciones />
         </View>
 
         {/* Carrusel de banners */}
@@ -385,14 +381,6 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '700',
     letterSpacing: -0.3,
-  },
-  iconBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(255,255,255,0.08)',
   },
   banner: {
     borderRadius: 20,

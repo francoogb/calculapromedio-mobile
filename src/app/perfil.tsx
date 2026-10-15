@@ -3,7 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router, useFocusEffect } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as WebBrowser from 'expo-web-browser';
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   Alert,
   Image,
@@ -18,10 +18,10 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Colors, ContenidoCentrado, MaxContentWidth, Spacing } from '@/constants/theme';
+import { CampanaNotificaciones } from '@/components/notificaciones/campana';
 import { useSesion } from '@/context/sesion';
 import { ApiError } from '@/lib/api';
-import { getFavoritos, getHistorial } from '@/lib/storage';
-import {
+import { getFavoritos, getHistorial } from '@/lib/storage';import {
   getDiasDeUso,
   getEjerciciosResueltosCount,
   getUserProfile,
@@ -177,19 +177,6 @@ export default function PerfilScreen() {
   const emailMostrado = usuario?.email ?? perfil.email;
   const esPremium = usuario ? usuario.is_premium : perfil.plan === 'premium';
 
-  // Campana de notificaciones: avisa cuando faltan campos opcionales del perfil
-  const faltanCampos = !!usuario && (!usuario.telefono || !usuario.como_nos_conociste);
-  const scrollRef = useRef<ScrollView>(null);
-
-  /** La campana lleva al usuario a completar lo que falta; si no falta nada, lo confirma. */
-  const tocarCampana = () => {
-    if (faltanCampos) {
-      scrollRef.current?.scrollToEnd({ animated: true });
-    } else {
-      Alert.alert('Notificaciones', 'Todo al día: tu perfil está completo.');
-    }
-  };
-
   return (
     <View style={[styles.container, { backgroundColor: '#060919' }]}>
       <StatusBar style="light" />
@@ -206,20 +193,11 @@ export default function PerfilScreen() {
             <Text style={styles.brandTitle}>CalculaPromedio</Text>
           </View>
 
-          <Pressable
-            onPress={tocarCampana}
-            hitSlop={8}
-            style={({ pressed }) => [styles.settingsBtn, { opacity: pressed ? 0.7 : 1 }]}>
-            <View>
-              <Ionicons name="notifications-outline" size={22} color="#ffffff" />
-              {faltanCampos && <View style={styles.badgeCampana} />}
-            </View>
-          </Pressable>
+          <CampanaNotificaciones />
         </View>
       </View>
 
       <ScrollView
-        ref={scrollRef}
         contentContainerStyle={[styles.scrollContent, ContenidoCentrado, { paddingBottom: 100 }]}
         showsVerticalScrollIndicator={false}>
         {/* HERO CARD DE PERFIL */}
@@ -633,25 +611,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '800',
     letterSpacing: -0.3,
-  },
-  settingsBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.06)',
-  },
-  badgeCampana: {
-    position: 'absolute',
-    top: 2,
-    right: 2,
-    width: 9,
-    height: 9,
-    borderRadius: 5,
-    backgroundColor: '#ef4444',
-    borderWidth: 1.5,
-    borderColor: '#060919',
   },
   scrollContent: {
     paddingHorizontal: Spacing.four,

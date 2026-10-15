@@ -6,6 +6,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { CALCULADORAS, ESTILO_CARD, getCalculadora } from '@/constants/calculadoras';
+import { CampanaNotificaciones } from '@/components/notificaciones/campana';
 import { Colors, ContenidoCentrado, Spacing } from '@/constants/theme';
 import {
   borrarDelHistorial,
@@ -51,8 +52,13 @@ export default function FavoritosScreen() {
 
       <View style={[styles.hero, { paddingTop: insets.top + Spacing.two }]}>
         <View style={ContenidoCentrado}>
-          <Text style={styles.heroTitulo}>Favoritos</Text>
-          <Text style={styles.heroSub}>Tus calculadoras y cálculos guardados</Text>
+          <View style={styles.heroFila}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.heroTitulo}>Favoritos</Text>
+              <Text style={styles.heroSub}>Tus calculadoras y cálculos guardados</Text>
+            </View>
+            <CampanaNotificaciones />
+          </View>
         </View>
       </View>
 
@@ -163,6 +169,11 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.three,
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
+  },
+  heroFila: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
   heroTitulo: {
     color: '#ffffff',

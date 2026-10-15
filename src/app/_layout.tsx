@@ -125,6 +125,15 @@ function AppTabs() {
           tabBarStyle: { display: 'none' },
         }}
       />
+      {/* Centro de notificaciones: se abre desde la campana, no es tab */}
+      <Tabs.Screen
+        name="notificaciones"
+        options={{
+          headerShown: false,
+          href: null,
+          tabBarStyle: { display: 'none' },
+        }}
+      />
     </Tabs>
   );
 }
