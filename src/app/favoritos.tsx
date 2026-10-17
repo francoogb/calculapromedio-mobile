@@ -1,5 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { router, useFocusEffect } from 'expo-router';
+import { router, useFocusEffect, type Href } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -22,6 +22,15 @@ function formatearFecha(iso: string): string {
   return d.toLocaleDateString('es-CL', { day: 'numeric', month: 'short' }) +
     ' · ' +
     d.toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' });
+}
+
+/** Abre la calculadora de un cálculo guardado, pasándole la entrada para que llene sus campos. */
+function abrirCalculoGuardado(ruta: Href, entradaId: string) {
+  if (typeof ruta === 'string') {
+    router.push(`${ruta}?entrada=${entradaId}` as Href);
+  } else {
+    router.push(ruta);
+  }
 }
 
 export default function FavoritosScreen() {
@@ -121,7 +130,7 @@ export default function FavoritosScreen() {
                 return (
                   <Pressable
                     key={entrada.id}
-                    onPress={() => calc?.ruta && router.push(calc.ruta)}
+                    onPress={() => calc?.ruta && abrirCalculoGuardado(calc.ruta, entrada.id)}
                     style={({ pressed }) => [
                       styles.card,
                       {

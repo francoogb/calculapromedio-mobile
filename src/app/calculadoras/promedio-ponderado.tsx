@@ -23,6 +23,7 @@ import {
 } from '@/components/calculadora/piezas';
 import { DetalleCalculo, TarjetaResultado } from '@/components/calculadora/resultado';
 import { Acento, Colors, ContenidoCentrado, Spacing } from '@/constants/theme';
+import { useRestaurarEntrada } from '@/hooks/use-restaurar-entrada';
 import { guardarEnHistorial } from '@/lib/storage';
 
 const CALC_ID = 'promedio-ponderado';
@@ -86,6 +87,12 @@ export default function PromedioPonderadoScreen() {
   useEffect(() => {
     setGuardado(false);
   }, [filas]);
+
+  // Si se abrió desde "Cálculos guardados": llena las evaluaciones y muestra el resultado
+  useRestaurarEntrada<{ filas: { nombre: string; nota: string; porcentaje: string }[] }>((datos) => {
+    setFilas(datos.filas.map((f) => nuevaFila(f.nombre, f.nota, f.porcentaje)));
+    setCalculado(true);
+  });
 
   const calculo = useMemo(() => {
     let sumaPorcentaje = 0;
@@ -164,6 +171,7 @@ export default function PromedioPonderadoScreen() {
       calculadoraId: CALC_ID,
       resultado: calculo.promedio.toFixed(2),
       resumen: `${calculo.detalle.length} evaluaciones · ${formatearPct(calculo.sumaPorcentaje)}%`,
+      datos: { filas: filas.map((f) => ({ nombre: f.nombre, nota: f.nota, porcentaje: f.porcentaje })) },
     });
     setGuardado(true);
   };

@@ -18,6 +18,7 @@ import {
   type Tono,
 } from '@/components/calculadora/resultado';
 import { Colors, ContenidoCentrado, Spacing } from '@/constants/theme';
+import { useRestaurarEntrada } from '@/hooks/use-restaurar-entrada';
 import { guardarEnHistorial } from '@/lib/storage';
 
 const CALC_ID = 'porcentajes';
@@ -106,6 +107,14 @@ export default function PorcentajesScreen() {
 
   const scrollRef = useRef<ScrollView>(null);
   const resultadoY = useRef(0);
+
+  // Si se abrió desde "Cálculos guardados": llena los campos y muestra el resultado
+  useRestaurarEntrada<{ modo: Modo; valorA: string; valorB: string }>((datos) => {
+    setModo(datos.modo);
+    setValorA(datos.valorA);
+    setValorB(datos.valorB);
+    setCalculado(true);
+  });
 
   const config = MODOS[modo];
 
@@ -218,6 +227,7 @@ export default function PorcentajesScreen() {
       calculadoraId: CALC_ID,
       resultado: resultado.valor,
       resumen: resultado.descripcion.replace(/\.$/, ''),
+      datos: { modo, valorA, valorB },
     });
     setGuardado(true);
   };

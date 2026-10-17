@@ -18,6 +18,7 @@ import {
   type Tono,
 } from '@/components/calculadora/resultado';
 import { Colors, ContenidoCentrado, Spacing } from '@/constants/theme';
+import { useRestaurarEntrada } from '@/hooks/use-restaurar-entrada';
 import { guardarEnHistorial } from '@/lib/storage';
 
 const CALC_ID = 'nota-minima';
@@ -60,6 +61,15 @@ export default function NotaNecesariaScreen() {
 
   const scrollRef = useRef<ScrollView>(null);
   const resultadoY = useRef(0);
+
+  // Si se abrió desde "Cálculos guardados": llena los campos y muestra el resultado
+  useRestaurarEntrada<{ escala: Escala; actual: string; meta: string; peso: string }>((datos) => {
+    setEscala(datos.escala);
+    setActual(datos.actual);
+    setMeta(datos.meta);
+    setPeso(datos.peso);
+    setCalculado(true);
+  });
 
   const { max, min } = ESCALAS[escala];
 
@@ -171,6 +181,7 @@ export default function NotaNecesariaScreen() {
       calculadoraId: CALC_ID,
       resultado: resultado.guardar,
       resumen: `Llevas ${fmt(calculo.a)} · meta ${fmt(calculo.m)} · examen ${fmt(calculo.p)}%`,
+      datos: { escala, actual, meta, peso },
     });
     setGuardado(true);
   };

@@ -28,6 +28,7 @@ import {
   type Tono,
 } from '@/components/calculadora/resultado';
 import { Acento, Colors, ContenidoCentrado, Spacing } from '@/constants/theme';
+import { useRestaurarEntrada } from '@/hooks/use-restaurar-entrada';
 import { guardarEnHistorial } from '@/lib/storage';
 import { puntajeNEM, redondearNEM, type GrupoNEM } from '@/lib/tablas-nem';
 
@@ -101,6 +102,15 @@ export default function NemScreen() {
   const [pondCalculado, setPondCalculado] = useState(false);
 
   const [guardado, setGuardado] = useState(false);
+
+  // Si se abrió desde "Cálculos guardados": llena ambos pasos y muestra los resultados
+  useRestaurarEntrada<{ notas: string[]; grupo: GrupoNEM; pruebas: Pruebas; conPonderado: boolean }>((datos) => {
+    setNotas(datos.notas);
+    setGrupo(datos.grupo);
+    setPruebas(datos.pruebas);
+    setNemCalculado(true);
+    setPondCalculado(datos.conPonderado);
+  });
 
   const scrollRef = useRef<ScrollView>(null);
   const resultadoNemY = useRef(0);
@@ -226,12 +236,14 @@ export default function NemScreen() {
         calculadoraId: CALC_ID,
         resultado: fmt(ponderado.total),
         resumen: `Puntaje ponderado · ${ponderado.detalle.length} factores · ${fmt(ponderado.sumaPond)}%`,
+        datos: { notas, grupo, pruebas, conPonderado: true },
       });
     } else if (mostrarNem && nem && nem.puntaje !== null) {
       await guardarEnHistorial({
         calculadoraId: CALC_ID,
         resultado: String(nem.puntaje),
         resumen: `Puntaje NEM · promedio ${nem.redondeado.toFixed(2)} · grupo ${grupo}`,
+        datos: { notas, grupo, pruebas, conPonderado: false },
       });
     } else {
       return;

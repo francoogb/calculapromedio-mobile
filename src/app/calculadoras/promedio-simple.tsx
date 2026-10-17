@@ -23,6 +23,7 @@ import {
 } from '@/components/calculadora/piezas';
 import { DetalleCalculo, TarjetaResultado } from '@/components/calculadora/resultado';
 import { Acento, Colors, ContenidoCentrado, Spacing } from '@/constants/theme';
+import { useRestaurarEntrada } from '@/hooks/use-restaurar-entrada';
 import { guardarEnHistorial } from '@/lib/storage';
 
 const CALC_ID = 'promedio-simple';
@@ -72,6 +73,12 @@ export default function PromedioSimpleScreen() {
   useEffect(() => {
     setGuardado(false);
   }, [notas]);
+
+  // Si se abrió desde "Cálculos guardados": llena las notas y muestra el resultado
+  useRestaurarEntrada<{ notas: string[] }>((datos) => {
+    setNotas(datos.notas.map((valor) => nuevaNota(valor)));
+    setCalculado(true);
+  });
 
   const calculo = useMemo(() => {
     const validas = notas.map((n) => aNumero(n.valor)).filter(notaValida);
@@ -124,6 +131,7 @@ export default function PromedioSimpleScreen() {
       calculadoraId: CALC_ID,
       resultado: calculo.promedio.toFixed(2),
       resumen: `${calculo.cantidad} ${calculo.cantidad === 1 ? 'nota' : 'notas'}`,
+      datos: { notas: notas.map((n) => n.valor) },
     });
     setGuardado(true);
   };

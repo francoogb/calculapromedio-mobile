@@ -47,8 +47,9 @@ export function usePantallaCalculo(calculadoraId: string, dependencias: unknown[
     resultadoY.current = e.nativeEvent.layout.y;
   };
 
-  const guardar = async (resultado: string, resumen: string) => {
-    await guardarEnHistorial({ calculadoraId, resultado, resumen });
+  /** `datos`: lo que escribió el usuario (JSON), para reabrir el cálculo con los campos llenos. */
+  const guardar = async (resultado: string, resumen: string, datos?: unknown) => {
+    await guardarEnHistorial({ calculadoraId, resultado, resumen, datos });
     setGuardado(true);
   };
 

@@ -13,6 +13,11 @@ export type EntradaHistorial = {
   resumen: string;
   /** ISO 8601 */
   fecha: string;
+  /**
+   * Datos que escribió el usuario (JSON), para volver a abrir el cálculo con los campos llenos.
+   * Su forma la define cada calculadora; las entradas antiguas no lo traen.
+   */
+  datos?: unknown;
 };
 
 async function leerJSON<T>(key: string, fallback: T): Promise<T> {
@@ -53,6 +58,12 @@ export async function toggleFavorito(calculadoraId: string): Promise<boolean> {
 
 export function getHistorial(): Promise<EntradaHistorial[]> {
   return leerJSON<EntradaHistorial[]>(KEY_HISTORIAL, []);
+}
+
+/** Una entrada del historial por su id, o null si ya no existe. */
+export async function getEntradaHistorial(id: string): Promise<EntradaHistorial | null> {
+  const actuales = await getHistorial();
+  return actuales.find((e) => e.id === id) ?? null;
 }
 
 export async function guardarEnHistorial(

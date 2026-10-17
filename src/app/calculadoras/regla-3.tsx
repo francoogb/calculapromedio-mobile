@@ -22,6 +22,7 @@ import {
 } from '@/components/calculadora/piezas';
 import { DetalleCalculo, TarjetaResultado } from '@/components/calculadora/resultado';
 import { Acento, Colors, ContenidoCentrado, Spacing } from '@/constants/theme';
+import { useRestaurarEntrada } from '@/hooks/use-restaurar-entrada';
 import { guardarEnHistorial } from '@/lib/storage';
 
 const CALC_ID = 'regla-3';
@@ -68,6 +69,15 @@ export default function ReglaDeTresScreen() {
 
   const scrollRef = useRef<ScrollView>(null);
   const resultadoY = useRef(0);
+
+  // Si se abrió desde "Cálculos guardados": llena los campos y muestra el resultado
+  useRestaurarEntrada<{ tipo: Tipo; a: string; b: string; c: string }>((datos) => {
+    setTipo(datos.tipo);
+    setA(datos.a);
+    setB(datos.b);
+    setC(datos.c);
+    setCalculado(true);
+  });
 
   const config = TIPOS[tipo];
 
@@ -127,6 +137,7 @@ export default function ReglaDeTresScreen() {
       calculadoraId: CALC_ID,
       resultado: fmt(calculo.x),
       resumen: `${tipo === 'directa' ? 'Directa' : 'Inversa'} · ${fmt(calculo.na)} → ${fmt(calculo.nb)}, ${fmt(calculo.nc)} → X`,
+      datos: { tipo, a, b, c },
     });
     setGuardado(true);
   };
