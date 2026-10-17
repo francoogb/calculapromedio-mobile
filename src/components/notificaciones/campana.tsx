@@ -1,19 +1,36 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { useSesion } from '@/context/sesion';
+import { cargarNotificaciones } from '@/lib/notificaciones';
 
 /**
  * Campana de notificaciones global (se usa en las barras superiores de las tabs).
- * Muestra un punto rojo cuando hay pendientes. Hoy el único pendiente posible
- * son los campos del perfil por completar; en el futuro aquí entran las
- * novedades/actualizaciones que enviemos desde el servidor.
+ * Muestra un punto rojo cuando hay pendientes del perfil o notificaciones sin leer
+ * (la primera vez, la de bienvenida; después, las novedades que lleguen).
  * Al tocar abre la pantalla de notificaciones.
  */
 export function CampanaNotificaciones() {
   const { usuario } = useSesion();
-  const pendientes = !!usuario && (!usuario.telefono || !usuario.como_nos_conociste);
+  const [sinLeer, setSinLeer] = useState(false);
+
+  // Se revisa cada vez que la pantalla vuelve a estar a la vista (por ejemplo, al salir del centro)
+  useFocusEffect(
+    useCallback(() => {
+      let activo = true;
+      cargarNotificaciones().then((lista) => {
+        if (activo) setSinLeer(lista.some((n) => !n.leida));
+      });
+      return () => {
+        activo = false;
+      };
+    }, [])
+  );
+
+  const pendientes =
+    sinLeer || (!!usuario && (!usuario.telefono || !usuario.como_nos_conociste));
 
   return (
     <Pressable

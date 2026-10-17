@@ -1,20 +1,45 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { router, useFocusEffect } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { CabeceraCuenta } from '@/components/cuenta/campos';
 import { FormularioCompletarPerfil } from '@/components/cuenta/completar-perfil';
 import { Colors, ContenidoCentrado, Spacing } from '@/constants/theme';
 import { useSesion } from '@/context/sesion';
+import {
+  cargarNotificaciones,
+  ID_BIENVENIDA,
+  marcarTodasLeidas,
+  type Notificacion,
+} from '@/lib/notificaciones';
 
 const colors = Colors.dark;
 
 /**
- * Centro de notificaciones. Hoy lista los pendientes del perfil; es el lugar
- * donde en el futuro llegarán las novedades y actualizaciones que enviemos.
+ * Centro de notificaciones. Lista los pendientes del perfil y las notificaciones
+ * (la de bienvenida la primera vez; después, las novedades y actualizaciones que enviemos).
  */
 export default function NotificacionesScreen() {
   const { usuario } = useSesion();
+  const [lista, setLista] = useState<Notificacion[]>([]);
+
+  // Se muestran con su estado de "sin leer" y recién después se marcan como leídas
+  useFocusEffect(
+    useCallback(() => {
+      let activo = true;
+      cargarNotificaciones().then((cargadas) => {
+        if (!activo) return;
+        setLista(cargadas);
+        marcarTodasLeidas();
+      });
+      return () => {
+        activo = false;
+      };
+    }, [])
+  );
+
   const faltaPerfil = !!usuario && (!usuario.telefono || !usuario.como_nos_conociste);
   const faltaTelefono = !!usuario && !usuario.telefono;
   const faltaConociste = !!usuario && !usuario.como_nos_conociste;
@@ -48,7 +73,46 @@ export default function NotificacionesScreen() {
           </View>
         )}
 
-        {faltaPerfil ? (
+        {/* Invitados: invitación a iniciar sesión (desaparece sola al tener cuenta) */}
+        {!usuario && (
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <View style={styles.iconoWrap}>
+                <Ionicons name="person-add-outline" size={22} color="#a78bfa" />
+              </View>
+              <View style={styles.cardTexto}>
+                <Text style={styles.cardTitulo}>Inicia sesión para sacarle más provecho</Text>
+                <Text style={styles.cardDesc}>
+                  Con tu cuenta gratuita te avisamos de las novedades de CalculaPromedio y accedes a
+                  herramientas como Resolver con foto.
+                </Text>
+              </View>
+            </View>
+            <Pressable onPress={() => router.push('/login')} hitSlop={8} style={styles.enlace}>
+              <Text style={styles.enlaceTexto}>Iniciar sesión</Text>
+              <Ionicons name="arrow-forward" size={14} color="#a78bfa" />
+            </Pressable>
+          </View>
+        )}
+
+        {lista.map((n) => (
+          <View key={n.id} style={[styles.notificacion, !n.leida && styles.notificacionNueva]}>
+            <View style={styles.iconoWrap}>
+              <Ionicons
+                name={n.id === ID_BIENVENIDA ? 'sparkles' : 'notifications'}
+                size={22}
+                color="#a78bfa"
+              />
+            </View>
+            <View style={styles.cardTexto}>
+              <Text style={styles.cardTitulo}>{n.titulo}</Text>
+              <Text style={styles.cardDesc}>{n.texto}</Text>
+            </View>
+            {!n.leida && <View style={styles.puntoNueva} />}
+          </View>
+        ))}
+
+        {lista.length > 0 || !usuario ? null : faltaPerfil ? (
           <Text style={styles.notas}>
             También avisaremos aquí de actualizaciones, novedades y noticias de CalculaPromedio.
           </Text>
@@ -111,6 +175,38 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     fontSize: 13,
     lineHeight: 18,
+  },
+  enlace: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 6,
+    marginLeft: 54,
+  },
+  enlaceTexto: {
+    color: '#a78bfa',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  notificacion: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    borderWidth: 1,
+    borderColor: 'rgba(148, 163, 184, 0.18)',
+    borderRadius: 16,
+    padding: 14,
+  },
+  notificacionNueva: {
+    backgroundColor: 'rgba(99, 102, 241, 0.1)',
+    borderColor: 'rgba(129, 140, 248, 0.4)',
+  },
+  puntoNueva: {
+    width: 9,
+    height: 9,
+    borderRadius: 5,
+    backgroundColor: '#6366f1',
   },
   notas: {
     color: '#64748b',
