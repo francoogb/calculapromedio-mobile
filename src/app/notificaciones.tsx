@@ -1,9 +1,9 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { CabeceraCuenta } from '@/components/cuenta/campos';
+import { FormularioCompletarPerfil } from '@/components/cuenta/completar-perfil';
 import { Colors, ContenidoCentrado, Spacing } from '@/constants/theme';
 import { useSesion } from '@/context/sesion';
 
@@ -26,20 +26,20 @@ export default function NotificacionesScreen() {
         contentContainerStyle={[styles.scroll, ContenidoCentrado]}
         showsVerticalScrollIndicator={false}>
         {faltaPerfil && (
-          <Pressable
-            onPress={() => router.push('/perfil')}
-            style={({ pressed }) => [styles.card, { opacity: pressed ? 0.85 : 1 }]}>
-            <View style={styles.iconoWrap}>
-              <Ionicons name="person-outline" size={22} color="#a78bfa" />
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <View style={styles.iconoWrap}>
+                <Ionicons name="person-outline" size={22} color="#a78bfa" />
+              </View>
+              <View style={styles.cardTexto}>
+                <Text style={styles.cardTitulo}>Completa tu perfil</Text>
+                <Text style={styles.cardDesc}>
+                  Falta tu teléfono y/o contarnos cómo nos conociste. Rellénalo aquí mismo.
+                </Text>
+              </View>
             </View>
-            <View style={styles.cardTexto}>
-              <Text style={styles.cardTitulo}>Completa tu perfil</Text>
-              <Text style={styles.cardDesc}>
-                Falta tu teléfono y/o contarnos cómo nos conociste. Tócalo para ir al perfil.
-              </Text>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color="#64748b" />
-          </Pressable>
+            <FormularioCompletarPerfil />
+          </View>
         )}
 
         {faltaPerfil ? (
@@ -72,14 +72,17 @@ const styles = StyleSheet.create({
     gap: Spacing.three,
   },
   card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
     backgroundColor: 'rgba(167, 139, 250, 0.08)',
     borderWidth: 1,
     borderColor: 'rgba(167, 139, 250, 0.25)',
     borderRadius: 16,
     padding: 14,
+    gap: 14,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
   iconoWrap: {
     width: 42,

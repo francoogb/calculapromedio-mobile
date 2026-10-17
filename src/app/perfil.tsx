@@ -32,9 +32,6 @@ const colors = Colors.dark;
 
 const URL_CONTACTO = 'https://calculapromedio.cl/contacto';
 
-/** Mismas opciones que el formulario de registro de la web. */
-const OPCIONES_CONOCISTE = ['Instagram', 'TikTok', 'Mi profesor', 'Buscando en Google', 'Otro'];
-
 export default function PerfilScreen() {
   const insets = useSafeAreaInsets();
   const { usuario, cerrarSesion, eliminarCuenta, actualizarUsuario } = useSesion();
@@ -57,17 +54,10 @@ export default function PerfilScreen() {
   const [nuevoNombre, setNuevoNombre] = useState('');
   const [modalPlanesVisible, setModalPlanesVisible] = useState(false);
 
-  // Datos opcionales de la cuenta (teléfono y "cómo nos conociste", decisión #1)
-  const [telefono, setTelefono] = useState('');
-  const [conociste, setConociste] = useState<string | null>(null);
-  const [guardandoDatos, setGuardandoDatos] = useState(false);
-
   const cargarDatos = useCallback(async () => {
     const p = await getUserProfile();
     setPerfil(p);
     setNuevoNombre(usuario?.nombre ?? p.nombre);
-    setTelefono(usuario?.telefono ?? '');
-    setConociste(usuario?.como_nos_conociste ?? null);
 
     const favs = await getFavoritos();
     setFavoritosCount(favs.length > 0 ? favs.length : 5);
@@ -105,26 +95,6 @@ export default function PerfilScreen() {
       setPerfil(actualizado);
     }
     setModalEditarVisible(false);
-  };
-
-  /** Guarda teléfono y "cómo nos conociste" (opcionales) en la cuenta vía PATCH /me. */
-  const guardarDatosCuenta = async () => {
-    if (!usuario || guardandoDatos) return;
-    setGuardandoDatos(true);
-    try {
-      await actualizarUsuario({
-        telefono: telefono.trim() || null,
-        como_nos_conociste: conociste,
-      });
-      Alert.alert('Listo', 'Tus datos fueron guardados.');
-    } catch (e) {
-      Alert.alert(
-        'No se pudo guardar',
-        e instanceof ApiError ? e.message : 'Inténtalo de nuevo más tarde.'
-      );
-    } finally {
-      setGuardandoDatos(false);
-    }
   };
 
   const confirmarCerrarSesion = () => {
@@ -384,70 +354,19 @@ export default function PerfilScreen() {
             </Pressable>
           </View>
 
-          {/* Datos opcionales de la cuenta: cada campo se oculta al completarse */}
-          {usuario && (!usuario.telefono || !usuario.como_nos_conociste) && (
-            <View style={styles.completarCard}>
-              <Text style={styles.sectionHeaderTitle}>Completa tu perfil (opcional)</Text>
-
-              {!usuario.telefono && (
-                <TextInput
-                  value={telefono}
-                  onChangeText={setTelefono}
-                  placeholder="Teléfono"
-                  placeholderTextColor="#64748b"
-                  keyboardType="phone-pad"
-                  style={styles.campoPerfil}
-                />
-              )}
-
-              {!usuario.como_nos_conociste && (
-                <>
-                  <Text style={styles.labelConociste}>¿Cómo nos conociste?</Text>
-                  <View style={styles.chipsRow}>
-                    {OPCIONES_CONOCISTE.map((opcion) => {
-                      const activo = conociste === opcion;
-                      return (
-                        <Pressable
-                          key={opcion}
-                          onPress={() => setConociste(activo ? null : opcion)}
-                          style={[styles.chip, activo && styles.chipActivo]}>
-                          <Text style={[styles.chipTexto, activo && styles.chipTextoActivo]}>
-                            {opcion}
-                          </Text>
-                        </Pressable>
-                      );
-                    })}
-                  </View>
-                </>
-              )}
-
-              <Pressable
-                onPress={guardarDatosCuenta}
-                disabled={guardandoDatos}
-                style={({ pressed }) => [
-                  styles.guardarBtn,
-                  { opacity: guardandoDatos ? 0.6 : pressed ? 0.85 : 1 },
-                ]}>
-                <Text style={styles.guardarBtnTexto}>
-                  {guardandoDatos ? 'Guardando…' : 'Guardar datos'}
-                </Text>
-              </Pressable>
-            </View>
-          )}
-
+          {/* Un solo botón de cuenta: cerrar sesión si hay sesión, crear cuenta si no */}
           {usuario ? (
             <>
-              {/* Botón Cerrar Sesión */}
               <Pressable
                 onPress={confirmarCerrarSesion}
                 style={({ pressed }) => [
                   styles.logoutCard,
                   { opacity: pressed ? 0.8 : 1 },
                 ]}>
-                <View style={styles.logoutIconBox}>
-                  <Ionicons name="log-out" size={20} color="#ef4444" />
+                <View style={styles.loginIconBoxCrear}>
+                  <Ionicons name="log-out" size={20} color="#a78bfa" />
                 </View>
-                <Text style={styles.logoutText}>Cerrar sesión</Text>
+                <Text style={styles.loginTextCrear}>Cerrar sesión</Text>
               </Pressable>
 
               {/* Botón Eliminar Cuenta */}
@@ -464,28 +383,17 @@ export default function PerfilScreen() {
               </Pressable>
             </>
           ) : (
-            <>
-              {/* Invitado: entrada a la cuenta */}
-              <Pressable
-                onPress={() => router.push('/login')}
-                style={({ pressed }) => [styles.loginCard, { opacity: pressed ? 0.85 : 1 }]}>
-                <View style={styles.loginIconBox}>
-                  <Ionicons name="person" size={20} color="#ffffff" />
-                </View>
-                <Text style={styles.loginText}>Iniciar sesión</Text>
-              </Pressable>
-              <Pressable
-                onPress={() => router.push('/registro')}
-                style={({ pressed }) => [
-                  styles.logoutCard,
-                  { opacity: pressed ? 0.8 : 1 },
-                ]}>
-                <View style={styles.loginIconBoxCrear}>
-                  <Ionicons name="person-add" size={20} color="#a78bfa" />
-                </View>
-                <Text style={styles.loginTextCrear}>Crear cuenta gratis</Text>
-              </Pressable>
-            </>
+            <Pressable
+              onPress={() => router.push('/registro')}
+              style={({ pressed }) => [
+                styles.logoutCard,
+                { opacity: pressed ? 0.8 : 1 },
+              ]}>
+              <View style={styles.loginIconBoxCrear}>
+                <Ionicons name="person-add" size={20} color="#a78bfa" />
+              </View>
+              <Text style={styles.loginTextCrear}>Crear cuenta gratis</Text>
+            </Pressable>
           )}
         </View>
       </ScrollView>
@@ -879,30 +787,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
   },
-  loginCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    padding: 14,
-    backgroundColor: '#4f46e5',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    marginTop: 4,
-  },
-  loginIconBox: {
-    width: 38,
-    height: 38,
-    borderRadius: 11,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  loginText: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '700',
-  },
   loginIconBoxCrear: {
     width: 38,
     height: 38,
@@ -913,63 +797,6 @@ const styles = StyleSheet.create({
   },
   loginTextCrear: {
     color: '#a78bfa',
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  completarCard: {
-    gap: 10,
-    marginTop: 4,
-  },
-  campoPerfil: {
-    height: 48,
-    backgroundColor: 'rgba(255, 255, 255, 0.04)',
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    color: '#ffffff',
-    fontSize: 15,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
-  },
-  labelConociste: {
-    color: colors.textSecondary,
-    fontSize: 13,
-    fontWeight: '600',
-    marginLeft: 2,
-  },
-  chipsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  chip: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 999,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  chipActivo: {
-    backgroundColor: 'rgba(99, 102, 241, 0.25)',
-    borderColor: '#6366f1',
-  },
-  chipTexto: {
-    color: '#94a3b8',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  chipTextoActivo: {
-    color: '#ffffff',
-  },
-  guardarBtn: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: 46,
-    borderRadius: 12,
-    backgroundColor: '#4f46e5',
-  },
-  guardarBtnTexto: {
-    color: '#ffffff',
     fontSize: 14,
     fontWeight: '700',
   },
