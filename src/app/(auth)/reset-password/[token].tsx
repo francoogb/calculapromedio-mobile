@@ -81,7 +81,18 @@ export default function NuevaContrasenaScreen() {
         onBoton={() => router.replace('/login')}
       />
     );
-  } else if (!token || !email || enlaceInvalido) {
+  } else if (!token || !email) {
+    // Faltan datos en la dirección: el servidor ni se consulta
+    contenido = (
+      <EstadoCuenta
+        titulo="Enlace incompleto"
+        texto="A este enlace le faltan datos. Vuelve a abrirlo desde el correo, completo, o pide uno nuevo."
+        etiquetaBoton="Pedir un enlace nuevo"
+        onBoton={pedirEnlaceNuevo}
+      />
+    );
+  } else if (enlaceInvalido) {
+    // El servidor lo rechazó: vencido, ya usado o incorrecto
     contenido = (
       <EstadoCuenta
         titulo="Enlace no válido"

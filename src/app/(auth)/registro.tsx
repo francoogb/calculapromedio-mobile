@@ -108,7 +108,7 @@ export default function RegistroScreen() {
           showsVerticalScrollIndicator={false}>
           <BotonVolver />
           <Text style={styles.titulo}>Crear una nueva cuenta</Text>
-          <Text style={styles.subtitulo}>Recibes 5 días de premium de regalo al registrarte.</Text>
+          <Text style={styles.subtitulo}>Crea tu cuenta y usa todo gratis hasta el 31 de diciembre.</Text>
 
           <View style={styles.formulario}>
             <CampoTexto
