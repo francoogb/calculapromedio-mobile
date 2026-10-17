@@ -335,6 +335,20 @@ export default function PerfilScreen() {
               </View>
               <Ionicons name="chevron-forward" size={18} color="#64748b" />
             </Pressable>
+
+            {/* 5. Políticas y términos */}
+            <Pressable
+              onPress={() => router.push('/politicas')}
+              style={({ pressed }) => [styles.menuItem, { opacity: pressed ? 0.75 : 1 }]}>
+              <View style={[styles.menuIconBox, { backgroundColor: 'rgba(139, 92, 246, 0.15)' }]}>
+                <Ionicons name="shield-checkmark" size={20} color="#8b5cf6" />
+              </View>
+              <View style={styles.menuTextCol}>
+                <Text style={styles.menuTitle}>Políticas y términos</Text>
+                <Text style={styles.menuDesc}>Privacidad y condiciones de uso</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color="#64748b" />
+            </Pressable>
           </View>
 
           {/* Un solo botón de cuenta: cerrar sesión si hay sesión, crear cuenta si no */}

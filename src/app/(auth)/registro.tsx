@@ -5,6 +5,7 @@ import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleShee
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BotonEnviar, BotonVolver, CampoTexto, EnlaceAlternativo, ErrorGeneral } from '@/components/cuenta/campos';
+import { AceptacionLegal } from '@/components/cuenta/enlaces-legales';
 import { FondoDecorativo } from '@/components/cuenta/fondo';
 import { Colors, ContenidoCentrado, Spacing } from '@/constants/theme';
 import { useSesion } from '@/context/sesion';
@@ -155,6 +156,7 @@ export default function RegistroScreen() {
             {errorGeneral && <ErrorGeneral mensaje={errorGeneral} />}
 
             <BotonEnviar label="Crear cuenta" onPress={enviar} cargando={cargando} />
+            <AceptacionLegal />
           </View>
 
           <EnlaceAlternativo

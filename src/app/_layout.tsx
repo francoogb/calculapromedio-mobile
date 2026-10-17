@@ -134,6 +134,15 @@ function AppTabs() {
           tabBarStyle: { display: 'none' },
         }}
       />
+      {/* Políticas y términos: se abre desde el perfil, no es tab */}
+      <Tabs.Screen
+        name="politicas"
+        options={{
+          headerShown: false,
+          href: null,
+          tabBarStyle: { display: 'none' },
+        }}
+      />
       {/* Edición del perfil: se abre desde el perfil, no es tab */}
       <Tabs.Screen
         name="editar-perfil"
