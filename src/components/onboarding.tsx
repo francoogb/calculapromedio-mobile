@@ -12,8 +12,6 @@ import {
   View,
   useWindowDimensions,
   type ImageSourcePropType,
-  type NativeScrollEvent,
-  type NativeSyntheticEvent,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -27,7 +25,12 @@ type Slider = {
   tituloAcento: string;
   texto: string;
   imagen?: ImageSourcePropType;
+  /** Ancho / alto de la imagen. Sin valor se muestra cuadrada. */
+  imagenAspecto?: number;
 };
+
+/** Alto común de las ilustraciones del onboarding. */
+const ALTO_IMAGEN = 290;
 
 /** Los 3 pasos del onboarding. */
 const SLIDERS: Slider[] = [
@@ -40,11 +43,11 @@ const SLIDERS: Slider[] = [
     imagen: require('../../assets/images/onboarding-1.webp'),
   },
   {
-    id: 'tutor-ia',
-    icono: 'chatbubbles',
-    titulo: 'Entiende, no solo',
-    tituloAcento: 'memorices',
-    texto: 'Practica ejercicios, recibe explicaciones paso a paso y utiliza el Tutor IA para comprender los temas que más te cuestan.',
+    id: 'resolver-foto',
+    icono: 'camera',
+    titulo: 'Escanea y resuelve',
+    tituloAcento: 'con una foto',
+    texto: 'Toma una foto de tu ejercicio, selecciona el problema y descubre su solución paso a paso.',
     imagen: require('../../assets/images/onboarding-2.webp'),
   },
   {
@@ -52,7 +55,7 @@ const SLIDERS: Slider[] = [
     icono: 'trending-up',
     titulo: 'Tu progreso,',
     tituloAcento: 'paso a paso',
-    texto: 'Practica para la PAES, organiza tus estudios y sigue tu avance a medida que utilizas CalculaPromedio.',
+    texto: 'Guarda tus calculadoras favoritas, revisa tu historial de cálculos y sigue tu avance a medida que utilizas CalculaPromedio.',
     imagen: require('../../assets/images/onboarding-3.webp'),
   },
 ];
@@ -60,18 +63,19 @@ const SLIDERS: Slider[] = [
 /** Onboarding de primer uso: 3 pasos, se muestra una vez y se guarda localmente. */
 export function Onboarding({ onListo }: { onListo: () => void }) {
   const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
+  // La ilustración se adapta al alto de la pantalla para que el texto de abajo siempre se vea
+  const altoImagen = Math.min(ALTO_IMAGEN, Math.max(180, Math.round(height * 0.32)));
   const pagerRef = useRef<ScrollView>(null);
   const [paginaActiva, setPaginaActiva] = useState(0);
 
   const esUltima = paginaActiva === SLIDERS.length - 1;
 
-  const alCambiarPagina = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    setPaginaActiva(Math.round(e.nativeEvent.contentOffset.x / width));
-  };
-
+  /** Solo se avanza con el botón "Continuar": el deslizamiento con el dedo está desactivado. */
   function continuar() {
-    pagerRef.current?.scrollTo({ x: width * (paginaActiva + 1), animated: true });
+    const siguiente = Math.min(paginaActiva + 1, SLIDERS.length - 1);
+    pagerRef.current?.scrollTo({ x: width * siguiente, animated: true });
+    setPaginaActiva(siguiente);
   }
 
   async function terminar() {
@@ -110,12 +114,24 @@ export function Onboarding({ onListo }: { onListo: () => void }) {
           ref={pagerRef}
           horizontal
           pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          onMomentumScrollEnd={alCambiarPagina}>
+          scrollEnabled={false}
+          showsHorizontalScrollIndicator={false}>
           {SLIDERS.map((slider) => (
-            <View key={slider.id} style={[styles.pagina, { width }]}>
+            <ScrollView
+              key={slider.id}
+              style={{ width }}
+              contentContainerStyle={styles.pagina}
+              showsVerticalScrollIndicator={false}
+              bounces={false}>
               {slider.imagen ? (
-                <Image source={slider.imagen} style={styles.sliderImagen} resizeMode="cover" />
+                <Image
+                  source={slider.imagen}
+                  style={[
+                    styles.sliderImagen,
+                    { width: altoImagen * (slider.imagenAspecto ?? 1), height: altoImagen },
+                  ]}
+                  resizeMode="cover"
+                />
               ) : (
                 <View style={styles.sliderIconoWrap}>
                   <LinearGradient
@@ -130,7 +146,7 @@ export function Onboarding({ onListo }: { onListo: () => void }) {
               <Text style={styles.sliderTitulo}>{slider.titulo}</Text>
               <Text style={styles.sliderTituloAcento}>{slider.tituloAcento}</Text>
               <Text style={styles.sliderTexto}>{slider.texto}</Text>
-            </View>
+            </ScrollView>
           ))}
         </ScrollView>
 
@@ -231,13 +247,13 @@ const styles = StyleSheet.create({
     marginTop: Spacing.two,
   },
   pagina: {
-    alignItems: 'center',
-    paddingHorizontal: Spacing.six,
-    paddingTop: Spacing.six * 1.5,
+    alignItems: 'stretch',
+    paddingHorizontal: Spacing.five,
+    paddingTop: Spacing.five + Spacing.two,
+    paddingBottom: Spacing.three,
   },
   sliderImagen: {
-    width: 280,
-    height: 280,
+    alignSelf: 'center',
     borderRadius: 32,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.08)',
@@ -248,6 +264,7 @@ const styles = StyleSheet.create({
     elevation: 12,
   },
   sliderIconoWrap: {
+    alignSelf: 'center',
     marginTop: Spacing.five,
     shadowColor: '#7c3aed',
     shadowOffset: { width: 0, height: 8 },
@@ -264,26 +281,26 @@ const styles = StyleSheet.create({
   },
   sliderTitulo: {
     color: '#ffffff',
-    fontSize: 26,
+    fontSize: 32,
     fontWeight: '800',
-    letterSpacing: -0.4,
+    letterSpacing: -0.6,
     marginTop: Spacing.six,
-    textAlign: 'center',
+    textAlign: 'left',
   },
   sliderTituloAcento: {
     color: '#38bdf8',
-    fontSize: 26,
+    fontSize: 32,
     fontWeight: '800',
-    letterSpacing: -0.4,
-    textAlign: 'center',
+    letterSpacing: -0.6,
+    textAlign: 'left',
   },
   sliderTexto: {
     color: '#cbd5e1',
-    fontSize: 14,
-    lineHeight: 21,
-    textAlign: 'center',
+    fontSize: 16,
+    lineHeight: 24,
+    textAlign: 'left',
     marginTop: Spacing.three,
-    maxWidth: 320,
+    maxWidth: 340,
   },
   dots: {
     flexDirection: 'row',

@@ -68,8 +68,8 @@ const BANNERS: Banner[] = [
   {
     id: 'paes',
     gradient: ['#0c2a4a', '#312e81'],
-    titulo: 'Prepárate para la PAES',
-    tituloAcento: 'con simulaciones reales',
+    titulo: 'Simula tu puntaje PAES',
+    tituloAcento: 'y tu postulación',
     subtitulo: 'Estima tu NEM, tu puntaje ponderado y tu ranking de postulación.',
     boton: 'Ver más',
     ruta: '/calculadoras/nem',
