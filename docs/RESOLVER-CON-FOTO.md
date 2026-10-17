@@ -24,7 +24,7 @@
 
 **No construido todavía:** detección automática de recuadros, varios ejercicios por foto, fórmulas con tipografía matemática (hoy `x²` y `√25` en texto), tocar-para-enfocar y zoom en la cámara, recorte que parta en el marco de la cámara, botón de ajustes de permisos, pestañas "Resumen" y "Chat IA" del diseño, "Ver ejercicios similares".
 
-**Antes de publicar:** pruebas con 20–30 fotos reales (guías impresas con figuras), subir las variables `OPENROUTER_*` y `FOTO_LIMITE_*` al `.env` de producción, build nuevo con `expo-camera` y HTTPS (las apps instaladas bloquean HTTP), actualizar la política de privacidad y tests automatizados del endpoint.
+**Antes de publicar:** pruebas con 20–30 fotos reales (guías impresas con figuras), subir las variables `OPENROUTER_*` y `FOTO_LIMITE_*` al `.env` de producción, build nuevo con `expo-camera` y HTTPS (las apps instaladas bloquean HTTP), revisión legal de la política de privacidad y los términos (ya actualizados el 2026-10-17; la app los abre desde Perfil → Políticas y términos) y tests automatizados del endpoint.
 
 ---
 

@@ -234,7 +234,7 @@ Lee y resuelve un ejercicio a partir de una foto recortada, o recalcula con un t
 
 **Cupos por día (por usuario):** 10 fotos mientras rige la fase gratuita (`PREMIUM_GRATIS_HASTA`); 3 después, sin suscripción; 100 con premium individual. Las correcciones de texto tienen un cupo aparte de 30. Solo se descuenta cuando el análisis sale bien.
 
-**Privacidad:** la foto no se guarda en nuestro servidor; se reenvía al proveedor del modelo (OpenRouter). La app borra sus archivos temporales al terminar. Debe declararse en la política de privacidad.
+**Privacidad:** la foto no se guarda en nuestro servidor; se reenvía al proveedor del modelo (OpenRouter). La app borra sus archivos temporales al terminar. Declarado en la política de privacidad (§1.3 y §4.6).
 
 ---
 
