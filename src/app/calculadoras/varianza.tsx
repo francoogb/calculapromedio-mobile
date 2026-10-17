@@ -16,6 +16,7 @@ import { DetalleCalculo, TarjetaResultado } from '@/components/calculadora/resul
 import { Acento, Colors, ContenidoCentrado, Spacing } from '@/constants/theme';
 import { media, suma } from '@/lib/estadistica';
 import { fmtNumero } from '@/lib/matematica';
+import { useRestaurarEntrada } from '@/hooks/use-restaurar-entrada';
 import { guardarEnHistorial } from '@/lib/storage';
 
 const CALC_ID = 'varianza';
@@ -28,6 +29,9 @@ export default function VarianzaScreen() {
   const [tipo, setTipo] = useState<Tipo>('poblacion');
   const [calculado, setCalculado] = useState(false);
   const [guardado, setGuardado] = useState(false);
+
+  // Al abrir desde "Cálculos guardados": llena los campos y muestra el resultado
+  useRestaurarEntrada<{ datos: number[]; tipo: Tipo }>((d) => { setDatos(d.datos); setTipo(d.tipo); setCalculado(true); });
 
   const scrollRef = useRef<ScrollView>(null);
   const resultadoY = useRef(0);
@@ -72,6 +76,7 @@ export default function VarianzaScreen() {
       calculadoraId: CALC_ID,
       resultado: fmtNumero(calculo.s, 3),
       resumen: `Desv. estándar (${tipo === 'poblacion' ? 'población' : 'muestra'}) · varianza ${fmtNumero(calculo.v, 3)}`,
+      datos: { datos, tipo },
     });
     setGuardado(true);
   };

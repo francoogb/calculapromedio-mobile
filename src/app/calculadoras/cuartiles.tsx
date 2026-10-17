@@ -17,6 +17,7 @@ import { DetalleCalculo, TarjetaResultado } from '@/components/calculadora/resul
 import { Acento, Colors, ContenidoCentrado, Spacing } from '@/constants/theme';
 import { ordenar, percentil, posicionPercentil } from '@/lib/estadistica';
 import { fmtNumero, leerNumero } from '@/lib/matematica';
+import { useRestaurarEntrada } from '@/hooks/use-restaurar-entrada';
 import { guardarEnHistorial } from '@/lib/storage';
 
 const CALC_ID = 'cuartiles';
@@ -27,6 +28,9 @@ export default function CuartilesScreen() {
   const [p, setP] = useState('90');
   const [calculado, setCalculado] = useState(false);
   const [guardado, setGuardado] = useState(false);
+
+  // Al abrir desde "Cálculos guardados": llena los campos y muestra el resultado
+  useRestaurarEntrada<{ datos: number[]; p: string }>((d) => { setDatos(d.datos); setP(d.p); setCalculado(true); });
 
   const scrollRef = useRef<ScrollView>(null);
   const resultadoY = useRef(0);
@@ -82,6 +86,7 @@ export default function CuartilesScreen() {
       calculadoraId: CALC_ID,
       resultado: `${fmtNumero(calculo.q1, 2)} · ${fmtNumero(calculo.q2, 2)} · ${fmtNumero(calculo.q3, 2)}`,
       resumen: `Q1 · Q2 · Q3 de ${calculo.n} datos · RIC ${fmtNumero(calculo.ric, 2)}`,
+      datos: { datos, p },
     });
     setGuardado(true);
   };

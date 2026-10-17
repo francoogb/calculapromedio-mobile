@@ -23,6 +23,7 @@ import { TarjetaResultado, TONOS, type Tono } from '@/components/calculadora/res
 import { Acento, Colors, ContenidoCentrado, Spacing } from '@/constants/theme';
 import { CARRERAS, type Carrera } from '@/lib/carreras';
 import { leerNumero } from '@/lib/matematica';
+import { useRestaurarEntrada } from '@/hooks/use-restaurar-entrada';
 import { guardarEnHistorial } from '@/lib/storage';
 
 const CALC_ID = 'simulador-postulacion';
@@ -59,6 +60,9 @@ export default function SimuladorPostulacionScreen() {
   const [filtroArea, setFiltroArea] = useState<string>('');
   const [calculado, setCalculado] = useState(false);
   const [guardado, setGuardado] = useState(false);
+
+  // Al abrir desde "Cálculos guardados": llena los campos y muestra el resultado
+  useRestaurarEntrada<{ puntajes: Puntajes; filtroEstado: Estado | 'todos'; filtroArea: string }>((d) => { setPuntajes(d.puntajes); setFiltroEstado(d.filtroEstado); setFiltroArea(d.filtroArea); setCalculado(true); });
 
   const scrollRef = useRef<ScrollView>(null);
   const resultadoY = useRef(0);
@@ -151,6 +155,7 @@ export default function SimuladorPostulacionScreen() {
       calculadoraId: CALC_ID,
       resultado: `${conteos.alcanza}/${resultados.length}`,
       resumen: mejor ? `Carreras al alcance · mejor: ${mejor.carrera} ${mejor.univ}` : 'Carreras al alcance',
+      datos: { puntajes, filtroEstado, filtroArea },
     });
     setGuardado(true);
   };

@@ -24,6 +24,7 @@ import {
 import { DetalleCalculo, TarjetaResultado, type FilaDetalle } from '@/components/calculadora/resultado';
 import { Acento, Colors, ContenidoCentrado, Spacing } from '@/constants/theme';
 import { factoresATexto, factoresPrimos, fmtNumero, leerEntero, mcd, mcm } from '@/lib/matematica';
+import { useRestaurarEntrada } from '@/hooks/use-restaurar-entrada';
 import { guardarEnHistorial } from '@/lib/storage';
 
 const CALC_ID = 'mcm-mcd';
@@ -45,6 +46,9 @@ export default function McmMcdScreen() {
   const [filas, setFilas] = useState<Fila[]>(() => [nuevaFila(), nuevaFila()]);
   const [calculado, setCalculado] = useState(false);
   const [guardado, setGuardado] = useState(false);
+
+  // Al abrir desde "Cálculos guardados": llena los campos y muestra el resultado
+  useRestaurarEntrada<{ filas: Fila[] }>((d) => { setFilas(d.filas); setCalculado(true); });
 
   const scrollRef = useRef<ScrollView>(null);
   const resultadoY = useRef(0);
@@ -136,6 +140,7 @@ export default function McmMcdScreen() {
       calculadoraId: CALC_ID,
       resultado: fmtNumero(calculo.resultadoMcm),
       resumen: `MCM de ${calculo.numeros.join(', ')} · MCD ${calculo.resultadoMcd}`,
+      datos: { filas },
     });
     setGuardado(true);
   };

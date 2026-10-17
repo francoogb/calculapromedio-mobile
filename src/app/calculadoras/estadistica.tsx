@@ -15,6 +15,7 @@ import { DetalleCalculo, TarjetaResultado } from '@/components/calculadora/resul
 import { Acento, Colors, ContenidoCentrado, Spacing } from '@/constants/theme';
 import { frecuencias, media, mediana, modas, ordenar, suma } from '@/lib/estadistica';
 import { fmtNumero } from '@/lib/matematica';
+import { useRestaurarEntrada } from '@/hooks/use-restaurar-entrada';
 import { guardarEnHistorial } from '@/lib/storage';
 
 const CALC_ID = 'estadistica';
@@ -24,6 +25,9 @@ export default function EstadisticaScreen() {
   const [datos, setDatos] = useState<number[]>([]);
   const [calculado, setCalculado] = useState(false);
   const [guardado, setGuardado] = useState(false);
+
+  // Al abrir desde "Cálculos guardados": llena los campos y muestra el resultado
+  useRestaurarEntrada<{ datos: number[] }>((d) => { setDatos(d.datos); setCalculado(true); });
 
   const scrollRef = useRef<ScrollView>(null);
   const resultadoY = useRef(0);
@@ -78,6 +82,7 @@ export default function EstadisticaScreen() {
       calculadoraId: CALC_ID,
       resultado: fmtNumero(calculo.media, 2),
       resumen: `Media · mediana ${fmtNumero(calculo.mediana, 2)} · ${calculo.n} datos`,
+      datos: { datos },
     });
     setGuardado(true);
   };

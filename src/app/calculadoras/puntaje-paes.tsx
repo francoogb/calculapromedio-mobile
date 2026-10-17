@@ -14,6 +14,7 @@ import {
 import { DetalleCalculo, TarjetaResultado, TONOS, type Tono } from '@/components/calculadora/resultado';
 import { Colors, ContenidoCentrado, Spacing } from '@/constants/theme';
 import { leerEntero } from '@/lib/matematica';
+import { useRestaurarEntrada } from '@/hooks/use-restaurar-entrada';
 import { guardarEnHistorial } from '@/lib/storage';
 import { TABLAS_PAES, type PruebaPAES } from '@/lib/tablas-paes';
 
@@ -40,6 +41,9 @@ export default function PuntajePaesScreen() {
   const [correctas, setCorrectas] = useState('');
   const [calculado, setCalculado] = useState(false);
   const [guardado, setGuardado] = useState(false);
+
+  // Al abrir desde "Cálculos guardados": llena los campos y muestra el resultado
+  useRestaurarEntrada<{ prueba: PruebaPAES; correctas: string }>((d) => { setPrueba(d.prueba); setCorrectas(d.correctas); setCalculado(true); });
 
   const scrollRef = useRef<ScrollView>(null);
   const resultadoY = useRef(0);
@@ -98,6 +102,7 @@ export default function PuntajePaesScreen() {
       calculadoraId: CALC_ID,
       resultado: String(calculo.puntaje),
       resumen: `${info.corto} · ${n} de ${max} correctas`,
+      datos: { prueba, correctas },
     });
     setGuardado(true);
   };

@@ -13,6 +13,7 @@ import {
 import { DetalleCalculo, TarjetaResultado, type FilaDetalle, type Tono } from '@/components/calculadora/resultado';
 import { Acento, Colors, ContenidoCentrado, Spacing } from '@/constants/theme';
 import { fmtNumero, leerNumero } from '@/lib/matematica';
+import { useRestaurarEntrada } from '@/hooks/use-restaurar-entrada';
 import { guardarEnHistorial } from '@/lib/storage';
 
 const CALC_ID = 'ecuacion-cuadratica';
@@ -44,6 +45,9 @@ export default function EcuacionCuadraticaScreen() {
   const [c, setC] = useState('');
   const [calculado, setCalculado] = useState(false);
   const [guardado, setGuardado] = useState(false);
+
+  // Al abrir desde "Cálculos guardados": llena los campos y muestra el resultado
+  useRestaurarEntrada<{ a: string; b: string; c: string }>((d) => { setA(d.a); setB(d.b); setC(d.c); setCalculado(true); });
 
   const scrollRef = useRef<ScrollView>(null);
   const resultadoY = useRef(0);
@@ -170,6 +174,7 @@ export default function EcuacionCuadraticaScreen() {
       calculadoraId: CALC_ID,
       resultado: calculo.delta < 0 ? 'Sin sol. real' : calculo.valor,
       resumen: ecuacionTexto(na, nb, nc),
+      datos: { a, b, c },
     });
     setGuardado(true);
   };

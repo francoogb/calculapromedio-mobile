@@ -14,6 +14,7 @@ import {
 } from '@/components/calculadora/piezas';
 import { DetalleCalculo, TarjetaResultado } from '@/components/calculadora/resultado';
 import { Acento, Colors, ContenidoCentrado, Spacing } from '@/constants/theme';
+import { useRestaurarEntrada } from '@/hooks/use-restaurar-entrada';
 import { guardarEnHistorial } from '@/lib/storage';
 
 const CALC_ID = 'conversor-escalas';
@@ -57,6 +58,9 @@ export default function ConversorEscalasScreen() {
   const [nota, setNota] = useState('');
   const [calculado, setCalculado] = useState(false);
   const [guardado, setGuardado] = useState(false);
+
+  // Al abrir desde "Cálculos guardados": llena los campos y muestra el resultado
+  useRestaurarEntrada<{ desde: EscalaId; hacia: EscalaId; nota: string }>((d) => { setDesde(d.desde); setHacia(d.hacia); setNota(d.nota); setCalculado(true); });
 
   const scrollRef = useRef<ScrollView>(null);
   const resultadoY = useRef(0);
@@ -118,6 +122,7 @@ export default function ConversorEscalasScreen() {
       calculadoraId: CALC_ID,
       resultado: fmt(calculo.convertida),
       resumen: `${fmt(n)} (${eDesde.corto}) → escala ${ESCALAS[hacia].corto}`,
+      datos: { desde, hacia, nota },
     });
     setGuardado(true);
   };

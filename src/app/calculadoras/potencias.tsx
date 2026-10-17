@@ -14,6 +14,7 @@ import {
 import { DetalleCalculo, TarjetaResultado, type FilaDetalle } from '@/components/calculadora/resultado';
 import { Acento, Colors, ContenidoCentrado, Spacing } from '@/constants/theme';
 import { fmtNumero, leerEntero, leerNumero, superindice } from '@/lib/matematica';
+import { useRestaurarEntrada } from '@/hooks/use-restaurar-entrada';
 import { guardarEnHistorial } from '@/lib/storage';
 
 const CALC_ID = 'potencias';
@@ -63,6 +64,9 @@ export default function PotenciasScreen() {
   const [exp2, setExp2] = useState('');
   const [calculado, setCalculado] = useState(false);
   const [guardado, setGuardado] = useState(false);
+
+  // Al abrir desde "Cálculos guardados": llena los campos y muestra el resultado
+  useRestaurarEntrada<{ modo: Modo; base: string; exp1: string; exp2: string }>((d) => { setModo(d.modo); setBase(d.base); setExp1(d.exp1); setExp2(d.exp2); setCalculado(true); });
 
   const scrollRef = useRef<ScrollView>(null);
   const resultadoY = useRef(0);
@@ -183,6 +187,7 @@ export default function PotenciasScreen() {
       calculadoraId: CALC_ID,
       resultado: fmtNumero(calculo.valor),
       resumen: calculo.expresion,
+      datos: { modo, base, exp1, exp2 },
     });
     setGuardado(true);
   };

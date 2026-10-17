@@ -13,6 +13,7 @@ import {
 } from '@/components/calculadora/piezas';
 import { DetalleCalculo, TarjetaResultado } from '@/components/calculadora/resultado';
 import { Colors, ContenidoCentrado, Spacing } from '@/constants/theme';
+import { useRestaurarEntrada } from '@/hooks/use-restaurar-entrada';
 import { guardarEnHistorial } from '@/lib/storage';
 
 const CALC_ID = 'nota-escala';
@@ -51,6 +52,9 @@ export default function NotaEscalaScreen() {
   const [exigencia, setExigencia] = useState<Exigencia>('60');
   const [calculado, setCalculado] = useState(false);
   const [guardado, setGuardado] = useState(false);
+
+  // Al abrir desde "Cálculos guardados": llena los campos y muestra el resultado
+  useRestaurarEntrada<{ total: string; obtenido: string; exigencia: Exigencia }>((d) => { setTotal(d.total); setObtenido(d.obtenido); setExigencia(d.exigencia); setCalculado(true); });
 
   const scrollRef = useRef<ScrollView>(null);
   const resultadoY = useRef(0);
@@ -120,6 +124,7 @@ export default function NotaEscalaScreen() {
       calculadoraId: CALC_ID,
       resultado: calculo.notaRedondeada.toFixed(1),
       resumen: `${fmt(nObtenido)} de ${fmt(nTotal)} pts · exigencia ${exigencia}%`,
+      datos: { total, obtenido, exigencia },
     });
     setGuardado(true);
   };

@@ -18,6 +18,7 @@ import {
   type Tono,
 } from '@/components/calculadora/resultado';
 import { Colors, ContenidoCentrado, Spacing } from '@/constants/theme';
+import { useRestaurarEntrada } from '@/hooks/use-restaurar-entrada';
 import { guardarEnHistorial } from '@/lib/storage';
 
 const CALC_ID = 'asistencia';
@@ -38,6 +39,9 @@ export default function AsistenciaScreen() {
   const [faltas, setFaltas] = useState('');
   const [calculado, setCalculado] = useState(false);
   const [guardado, setGuardado] = useState(false);
+
+  // Al abrir desde "Cálculos guardados": llena los campos y muestra el resultado
+  useRestaurarEntrada<{ totales: string; requerida: string; realizadas: string; faltas: string }>((d) => { setTotales(d.totales); setRequerida(d.requerida); setRealizadas(d.realizadas); setFaltas(d.faltas); setCalculado(true); });
 
   const scrollRef = useRef<ScrollView>(null);
   const resultadoY = useRef(0);
@@ -129,6 +133,7 @@ export default function AsistenciaScreen() {
       calculadoraId: CALC_ID,
       resultado: String(Math.max(calculo.restantes, 0)),
       resumen: `Faltas disponibles · ${f} de ${calculo.maximas} usadas · mínimo ${r}%`,
+      datos: { totales, requerida, realizadas, faltas },
     });
     setGuardado(true);
   };

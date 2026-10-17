@@ -13,6 +13,7 @@ import {
 import { DetalleCalculo, TarjetaResultado, type FilaDetalle, type Tono } from '@/components/calculadora/resultado';
 import { Acento, Colors, ContenidoCentrado, Spacing } from '@/constants/theme';
 import { fmtNumero, leerNumero } from '@/lib/matematica';
+import { useRestaurarEntrada } from '@/hooks/use-restaurar-entrada';
 import { guardarEnHistorial } from '@/lib/storage';
 
 const CALC_ID = 'factorizacion';
@@ -101,6 +102,9 @@ export default function FactorizacionScreen() {
   const [ejemploActivo, setEjemploActivo] = useState('Dos factores');
   const [calculado, setCalculado] = useState(false);
   const [guardado, setGuardado] = useState(false);
+
+  // Al abrir desde "Cálculos guardados": llena los campos y muestra el resultado
+  useRestaurarEntrada<{ a: string; b: string; c: string; ejemploActivo: string }>((d) => { setA(d.a); setB(d.b); setC(d.c); setEjemploActivo(d.ejemploActivo); setCalculado(true); });
 
   const scrollRef = useRef<ScrollView>(null);
   const resultadoY = useRef(0);
@@ -290,6 +294,7 @@ export default function FactorizacionScreen() {
       calculadoraId: CALC_ID,
       resultado: calculo.valor,
       resumen: calculo.resumen,
+      datos: { a, b, c, ejemploActivo },
     });
     setGuardado(true);
   };

@@ -15,6 +15,7 @@ import {
 import { DetalleCalculo, TarjetaResultado } from '@/components/calculadora/resultado';
 import { Acento, Colors, ContenidoCentrado, Spacing } from '@/constants/theme';
 import { fmtNumero, leerNumero } from '@/lib/matematica';
+import { useRestaurarEntrada } from '@/hooks/use-restaurar-entrada';
 import { guardarEnHistorial } from '@/lib/storage';
 
 const CALC_ID = 'pitagoras';
@@ -28,6 +29,9 @@ export default function PitagorasScreen() {
   const [lado2, setLado2] = useState('');
   const [calculado, setCalculado] = useState(false);
   const [guardado, setGuardado] = useState(false);
+
+  // Al abrir desde "Cálculos guardados": llena los campos y muestra el resultado
+  useRestaurarEntrada<{ incognita: Incognita; lado1: string; lado2: string }>((d) => { setIncognita(d.incognita); setLado1(d.lado1); setLado2(d.lado2); setCalculado(true); });
 
   const scrollRef = useRef<ScrollView>(null);
   const resultadoY = useRef(0);
@@ -115,6 +119,7 @@ export default function PitagorasScreen() {
       calculadoraId: CALC_ID,
       resultado: fmtNumero(calculo.resultado),
       resumen: `a = ${fmtNumero(calculo.a)}, b = ${fmtNumero(calculo.b)}, c = ${fmtNumero(calculo.c)}`,
+      datos: { incognita, lado1, lado2 },
     });
     setGuardado(true);
   };
