@@ -134,6 +134,15 @@ function AppTabs() {
           tabBarStyle: { display: 'none' },
         }}
       />
+      {/* Edición del perfil: se abre desde el perfil, no es tab */}
+      <Tabs.Screen
+        name="editar-perfil"
+        options={{
+          headerShown: false,
+          href: null,
+          tabBarStyle: { display: 'none' },
+        }}
+      />
     </Tabs>
   );
 }

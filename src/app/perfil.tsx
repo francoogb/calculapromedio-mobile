@@ -7,12 +7,11 @@ import React, { useCallback, useState } from 'react';
 import {
   Alert,
   Image,
-  Modal,
   Pressable,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -21,11 +20,12 @@ import { Colors, ContenidoCentrado, MaxContentWidth, Spacing } from '@/constants
 import { CampanaNotificaciones } from '@/components/notificaciones/campana';
 import { useSesion } from '@/context/sesion';
 import { ApiError } from '@/lib/api';
-import { getFavoritos, getHistorial } from '@/lib/storage';import {
+import { getFavoritos, getHistorial } from '@/lib/storage';
+import { degradadoAvatar, iniciales } from '@/lib/avatar';
+import {
   getDiasDeUso,
   getEjerciciosResueltosCount,
   getUserProfile,
-  saveUserProfile,
   type UserProfile,
 } from '@/lib/user';
 const colors = Colors.dark;
@@ -34,7 +34,7 @@ const URL_CONTACTO = 'https://calculapromedio.cl/contacto';
 
 export default function PerfilScreen() {
   const insets = useSafeAreaInsets();
-  const { usuario, cerrarSesion, eliminarCuenta, actualizarUsuario } = useSesion();
+  const { usuario, cerrarSesion, eliminarCuenta } = useSesion();
 
   const [perfil, setPerfil] = useState<UserProfile>({
     nombre: 'Estudiante',
@@ -49,15 +49,9 @@ export default function PerfilScreen() {
   const [ejerciciosCount, setEjerciciosCount] = useState(8);
   const [diasUso, setDiasUso] = useState(23);
 
-  // Modales
-  const [modalEditarVisible, setModalEditarVisible] = useState(false);
-  const [nuevoNombre, setNuevoNombre] = useState('');
-  const [modalPlanesVisible, setModalPlanesVisible] = useState(false);
-
   const cargarDatos = useCallback(async () => {
     const p = await getUserProfile();
     setPerfil(p);
-    setNuevoNombre(usuario?.nombre ?? p.nombre);
 
     const favs = await getFavoritos();
     setFavoritosCount(favs.length > 0 ? favs.length : 5);
@@ -70,32 +64,13 @@ export default function PerfilScreen() {
 
     const d = await getDiasDeUso();
     setDiasUso(d);
-  }, [usuario]);
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
       cargarDatos();
     }, [cargarDatos])
   );
-
-  const guardarNombre = async () => {
-    if (!nuevoNombre.trim()) return;
-    if (usuario) {
-      try {
-        await actualizarUsuario({ nombre: nuevoNombre.trim() });
-      } catch (e) {
-        Alert.alert(
-          'No se pudo guardar',
-          e instanceof ApiError ? e.message : 'Inténtalo de nuevo más tarde.'
-        );
-        return;
-      }
-    } else {
-      const actualizado = await saveUserProfile({ nombre: nuevoNombre.trim() });
-      setPerfil(actualizado);
-    }
-    setModalEditarVisible(false);
-  };
 
   const confirmarCerrarSesion = () => {
     Alert.alert(
@@ -145,7 +120,23 @@ export default function PerfilScreen() {
   // Datos mostrados: la sesión manda si existe; si no, el perfil local de invitado
   const nombreMostrado = usuario?.nombre ?? perfil.nombre;
   const emailMostrado = usuario?.email ?? perfil.email;
-  const esPremium = usuario ? usuario.is_premium : perfil.plan === 'premium';
+  const textoRacha = usuario
+    ? usuario.racha > 0
+      ? `Racha de ${usuario.racha} ${usuario.racha === 1 ? 'día' : 'días'}`
+      : 'Empieza tu racha'
+    : 'Invitado';
+
+  /** Abre el menú de compartir del teléfono con un mensaje para invitar a un compañero. */
+  const compartirApp = async () => {
+    try {
+      await Share.share({
+        message:
+          'Calcula tu promedio, tu NEM y tu puntaje PAES con CalculaPromedio: https://calculapromedio.cl',
+      });
+    } catch {
+      // El usuario cerró el menú o el teléfono no pudo abrirlo: no hay nada que avisar
+    }
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: '#060919' }]}>
@@ -168,7 +159,7 @@ export default function PerfilScreen() {
       </View>
 
       <ScrollView
-        contentContainerStyle={[styles.scrollContent, ContenidoCentrado, { paddingBottom: 100 }]}
+        contentContainerStyle={[styles.scrollContent, ContenidoCentrado, { paddingBottom: Spacing.five }]}
         showsVerticalScrollIndicator={false}>
         {/* HERO CARD DE PERFIL */}
         <LinearGradient
@@ -181,13 +172,13 @@ export default function PerfilScreen() {
           <View style={styles.heroContentRow}>
             {/* Avatar con botón de cámara */}
             <View style={styles.avatarWrapper}>
-              <View style={styles.avatarCircle}>
-                {usuario?.avatar ? (
-                  <Image source={{ uri: usuario.avatar }} style={styles.avatarImagen} resizeMode="cover" />
-                ) : (
-                  <Ionicons name="person" size={42} color="#c7d2fe" />
-                )}
-              </View>
+              <LinearGradient
+                colors={degradadoAvatar(usuario?.email ?? usuario?.nombre)}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.avatarCircle}>
+                <Text style={styles.avatarIniciales}>{iniciales(usuario?.nombre, usuario?.email)}</Text>
+              </LinearGradient>
               <Pressable
                 onPress={() => Alert.alert('Cambiar foto', 'Pronto podrás subir tu foto de perfil personalizada.')}
                 hitSlop={6}
@@ -199,7 +190,7 @@ export default function PerfilScreen() {
             {/* Datos de usuario */}
             <View style={styles.userInfoCol}>
               <Pressable
-                onPress={() => setModalEditarVisible(true)}
+                onPress={() => router.push('/editar-perfil')}
                 style={styles.nameRow}>
                 <Text style={styles.userName}>{nombreMostrado}</Text>
                 <Ionicons name="pencil" size={14} color="#94a3b8" />
@@ -207,10 +198,10 @@ export default function PerfilScreen() {
 
               {emailMostrado ? <Text style={styles.userEmail}>{emailMostrado}</Text> : null}
 
-              {/* Badge de Plan */}
-              <View style={styles.planBadge}>
-                <Ionicons name="sparkles" size={12} color="#facc15" />
-                <Text style={styles.planBadgeText}>{esPremium ? 'Plan Premium' : 'Plan Gratis'}</Text>
+              {/* Insignia de racha (o "Invitado" sin cuenta) */}
+              <View style={styles.rachaBadge}>
+                <Ionicons name={usuario ? 'flame' : 'person-outline'} size={12} color="#fb923c" />
+                <Text style={styles.rachaBadgeTexto}>{textoRacha}</Text>
               </View>
             </View>
 
@@ -261,33 +252,29 @@ export default function PerfilScreen() {
           </View>
         </View>
 
-        {/* TARJETA DE PLAN ACTUAL */}
+        {/* TARJETA: INVITAR A UN COMPAÑERO */}
         <LinearGradient
           colors={['#171c3d', '#111634']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          style={styles.planCard}>
-          <View style={styles.planIconSquare}>
-            <Ionicons name="trophy" size={26} color="#fbbf24" />
+          style={styles.compartirCard}>
+          <View style={styles.compartirIcono}>
+            <Ionicons name="share-social" size={24} color="#818cf8" />
           </View>
 
-          <View style={styles.planTextCol}>
-            <Text style={styles.planTag}>TU PLAN ACTUAL</Text>
-            <Text style={styles.planTitle}>{esPremium ? 'Plan Premium Activo' : 'Plan Gratis'}</Text>
-            <Text style={styles.planSub}>
-              {esPremium
-                ? 'Acceso total e ilimitado a todas las herramientas.'
-                : 'Accede a funciones básicas de la app.'}
-            </Text>
+          <View style={styles.compartirTexto}>
+            <Text style={styles.compartirTag}>COMPARTE</Text>
+            <Text style={styles.compartirTitulo}>Invita a un compañero</Text>
+            <Text style={styles.compartirSub}>Cuéntale a un amigo que usa CalculaPromedio.</Text>
           </View>
 
           <Pressable
-            onPress={() => setModalPlanesVisible(true)}
+            onPress={compartirApp}
             style={({ pressed }) => [
-              styles.verPlanesBtn,
+              styles.compartirBtn,
               { opacity: pressed ? 0.85 : 1 },
             ]}>
-            <Text style={styles.verPlanesText}>Ver planes</Text>
+            <Text style={styles.compartirBtnTexto}>Compartir</Text>
             <Ionicons name="chevron-forward" size={13} color="#ffffff" />
           </Pressable>
         </LinearGradient>
@@ -397,93 +384,6 @@ export default function PerfilScreen() {
           )}
         </View>
       </ScrollView>
-
-      {/* MODAL: EDITAR NOMBRE */}
-      <Modal visible={modalEditarVisible} transparent animationType="fade">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Editar nombre</Text>
-            <Text style={styles.modalSub}>¿Cómo quieres que te llamemos?</Text>
-
-            <TextInput
-              value={nuevoNombre}
-              onChangeText={setNuevoNombre}
-              placeholder="Tu nombre"
-              placeholderTextColor="#64748b"
-              style={styles.modalInput}
-              autoFocus
-            />
-
-            <View style={styles.modalActions}>
-              <Pressable
-                onPress={() => setModalEditarVisible(false)}
-                style={styles.modalCancelBtn}>
-                <Text style={styles.modalCancelText}>Cancelar</Text>
-              </Pressable>
-              <Pressable onPress={guardarNombre} style={styles.modalSaveBtn}>
-                <Text style={styles.modalSaveText}>Guardar</Text>
-              </Pressable>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      {/* MODAL: VER PLANES Y SUSCRIPCIÓN */}
-      <Modal visible={modalPlanesVisible} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { maxHeight: '85%' }]}>
-            <View style={styles.modalHeaderRow}>
-              <Text style={styles.modalTitle}>Planes y Suscripción</Text>
-              <Pressable onPress={() => setModalPlanesVisible(false)} hitSlop={10}>
-                <Ionicons name="close" size={22} color="#ffffff" />
-              </Pressable>
-            </View>
-
-            <ScrollView showsVerticalScrollIndicator={false}>
-              {/* Plan Premium Card */}
-              <LinearGradient
-                colors={['#4338ca', '#6d28d9']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.premiumPromoCard}>
-                <View style={styles.promoHeader}>
-                  <Text style={styles.promoBadge}>RECOMENDADO</Text>
-                  <Text style={styles.promoTitle}>Plan Premium PAES</Text>
-                  <Text style={styles.promoPrice}>$3.990 <Text style={styles.promoPriceSub}>/mes</Text></Text>
-                </View>
-
-                <View style={styles.promoFeatures}>
-                  <View style={styles.featureRow}>
-                    <Ionicons name="checkmark-circle" size={18} color="#a7f3d0" />
-                    <Text style={styles.featureText}>Resolución de ejercicios por foto ilimitada</Text>
-                  </View>
-                  <View style={styles.featureRow}>
-                    <Ionicons name="checkmark-circle" size={18} color="#a7f3d0" />
-                    <Text style={styles.featureText}>Explicaciones paso a paso con Tutor IA</Text>
-                  </View>
-                  <View style={styles.featureRow}>
-                    <Ionicons name="checkmark-circle" size={18} color="#a7f3d0" />
-                    <Text style={styles.featureText}>Banco de +240 ejercicios PAES M1 y M2</Text>
-                  </View>
-                  <View style={styles.featureRow}>
-                    <Ionicons name="checkmark-circle" size={18} color="#a7f3d0" />
-                    <Text style={styles.featureText}>Simulacros y ensayos cronometrados</Text>
-                  </View>
-                </View>
-
-                <Pressable
-                  onPress={() => {
-                    setModalPlanesVisible(false);
-                    WebBrowser.openBrowserAsync('https://calculapromedio.cl/hazte-premium');
-                  }}
-                  style={styles.promoBtn}>
-                  <Text style={styles.promoBtnText}>Hazte Premium con Flow.cl</Text>
-                </Pressable>
-              </LinearGradient>
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 }
@@ -573,10 +473,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarImagen: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+  avatarIniciales: {
+    color: '#ffffff',
+    fontSize: 26,
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
   userInfoCol: {
     flex: 1,
@@ -598,20 +499,20 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginBottom: 4,
   },
-  planBadge: {
+  rachaBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: 'rgba(250, 204, 21, 0.12)',
+    backgroundColor: 'rgba(251, 146, 60, 0.12)',
     borderWidth: 1,
-    borderColor: 'rgba(250, 204, 21, 0.3)',
+    borderColor: 'rgba(251, 146, 60, 0.3)',
     borderRadius: 999,
     paddingHorizontal: 9,
     paddingVertical: 3,
     alignSelf: 'flex-start',
   },
-  planBadgeText: {
-    color: '#facc15',
+  rachaBadgeTexto: {
+    color: '#fb923c',
     fontSize: 11,
     fontWeight: '700',
   },
@@ -665,7 +566,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 13,
   },
-  planCard: {
+  compartirCard: {
     borderRadius: 18,
     padding: Spacing.three,
     flexDirection: 'row',
@@ -674,37 +575,37 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.08)',
   },
-  planIconSquare: {
+  compartirIcono: {
     width: 48,
     height: 48,
     borderRadius: 14,
-    backgroundColor: 'rgba(245, 158, 11, 0.15)',
+    backgroundColor: 'rgba(99, 102, 241, 0.15)',
     borderWidth: 1,
-    borderColor: 'rgba(245, 158, 11, 0.3)',
+    borderColor: 'rgba(99, 102, 241, 0.3)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  planTextCol: {
+  compartirTexto: {
     flex: 1,
     gap: 2,
   },
-  planTag: {
-    color: '#fbbf24',
+  compartirTag: {
+    color: '#818cf8',
     fontSize: 10,
     fontWeight: '800',
     letterSpacing: 0.5,
   },
-  planTitle: {
+  compartirTitulo: {
     color: '#ffffff',
     fontSize: 15,
     fontWeight: '800',
   },
-  planSub: {
+  compartirSub: {
     color: '#94a3b8',
     fontSize: 11,
     lineHeight: 14,
   },
-  verPlanesBtn: {
+  compartirBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 3,
@@ -713,7 +614,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
-  verPlanesText: {
+  compartirBtnTexto: {
     color: '#ffffff',
     fontSize: 12,
     fontWeight: '700',
@@ -799,132 +700,5 @@ const styles = StyleSheet.create({
     color: '#a78bfa',
     fontSize: 14,
     fontWeight: '700',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: Spacing.four,
-  },
-  modalContent: {
-    width: '100%',
-    backgroundColor: '#0f172a',
-    borderRadius: 22,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.12)',
-    padding: Spacing.four,
-    gap: Spacing.three,
-  },
-  modalHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  modalTitle: {
-    color: '#ffffff',
-    fontSize: 18,
-    fontWeight: '800',
-  },
-  modalSub: {
-    color: '#94a3b8',
-    fontSize: 13,
-  },
-  modalInput: {
-    height: 48,
-    backgroundColor: '#1e293b',
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    color: '#ffffff',
-    fontSize: 15,
-    borderWidth: 1,
-    borderColor: '#334155',
-  },
-  modalActions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: 10,
-    marginTop: 8,
-  },
-  modalCancelBtn: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-  },
-  modalCancelText: {
-    color: '#94a3b8',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  modalSaveBtn: {
-    backgroundColor: '#4f46e5',
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderRadius: 10,
-  },
-  modalSaveText: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  premiumPromoCard: {
-    borderRadius: 18,
-    padding: Spacing.four,
-    gap: Spacing.three,
-    marginTop: 10,
-  },
-  promoHeader: {
-    gap: 4,
-  },
-  promoBadge: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    color: '#ffffff',
-    fontSize: 10,
-    fontWeight: '800',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-    alignSelf: 'flex-start',
-  },
-  promoTitle: {
-    color: '#ffffff',
-    fontSize: 20,
-    fontWeight: '800',
-  },
-  promoPrice: {
-    color: '#ffffff',
-    fontSize: 28,
-    fontWeight: '900',
-  },
-  promoPriceSub: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#e0e7ff',
-  },
-  promoFeatures: {
-    gap: 10,
-    paddingVertical: 8,
-  },
-  featureRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  featureText: {
-    color: '#f8fafc',
-    fontSize: 13,
-    fontWeight: '600',
-    flex: 1,
-  },
-  promoBtn: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: 'center',
-    marginTop: 6,
-  },
-  promoBtnText: {
-    color: '#4338ca',
-    fontSize: 14,
-    fontWeight: '800',
   },
 });
