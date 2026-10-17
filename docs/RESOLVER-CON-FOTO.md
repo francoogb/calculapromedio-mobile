@@ -17,7 +17,7 @@
 - **Recorte manual** (asas arrastrables con `PanResponder`, rotar, restablecer) en vez de la detección automática de recuadros. El estudiante deja un solo ejercicio; solo se envía el recorte.
 - **Un único endpoint** `POST /api/v1/resolver-foto`, no los dos de la sección 5 (`detectar` / `resolver`). Contrato en `docs/API.md`; lado servidor en `docs/ARQUITECTURA.md` §3.1 del repo Laravel.
 - **Corregir lo leído:** el estudiante puede editar el texto que leyó la IA y recalcular sin foto nueva. Se agregó porque ningún modelo lee letra a mano de forma fiable.
-- **Cuenta obligatoria y cupo diario:** 10 fotos al día mientras rige `PREMIUM_GRATIS_HASTA`, 3 después, 100 con premium. Invitados ven una pantalla que pide iniciar sesión.
+- **Cuenta obligatoria y cupo diario:** 15 fotos al día mientras rige `PREMIUM_GRATIS_HASTA`, 3 después, 15 con premium (igual al gratuito hasta que exista la versión premium del móvil). Invitados ven una pantalla que pide iniciar sesión.
 - **Privacidad:** el servidor no guarda fotos; la app borra sus archivos temporales (`src/lib/archivos-temporales.ts`) al escanear otro ejercicio o salir de la pantalla.
 
 **Decisiones tomadas:** modelo vía OpenRouter (Haiku 5.5 para pruebas, ~$0,4 CLP por foto); respuestas en texto plano sin LaTeX; el modelo se cambia desde el `.env` del servidor.
