@@ -50,28 +50,30 @@ export async function getDiasDeUso(): Promise<number> {
     }
     const diffMs = Date.now() - new Date(first).getTime();
     const dias = Math.floor(diffMs / (1000 * 60 * 60 * 24)) + 1;
-    return Math.max(dias, 23); // 23 como base inicial visual
+    return Math.max(dias, 1);
   } catch {
-    return 23;
+    return 1;
   }
 }
 
+/** Ejercicios resueltos con "Resolver con foto" en este dispositivo (0 si aún no hay ninguno). */
 export async function getEjerciciosResueltosCount(): Promise<number> {
   try {
     const raw = await AsyncStorage.getItem(KEY_EJERCICIOS_COUNT);
-    return raw ? parseInt(raw, 10) : 8; // 8 base inicial
+    const cantidad = raw ? parseInt(raw, 10) : 0;
+    return Number.isNaN(cantidad) ? 0 : cantidad;
   } catch {
-    return 8;
+    return 0;
   }
 }
 
 export async function incrementarEjerciciosResueltos(): Promise<number> {
+  const current = await getEjerciciosResueltosCount();
+  const updated = current + 1;
   try {
-    const current = await getEjerciciosResueltosCount();
-    const updated = current + 1;
     await AsyncStorage.setItem(KEY_EJERCICIOS_COUNT, updated.toString());
-    return updated;
   } catch {
-    return 8;
+    // Si no se puede guardar, el contador simplemente no avanza
   }
+  return updated;
 }

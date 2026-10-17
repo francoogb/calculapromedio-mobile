@@ -22,12 +22,7 @@ import { useSesion } from '@/context/sesion';
 import { ApiError } from '@/lib/api';
 import { getFavoritos, getHistorial } from '@/lib/storage';
 import { degradadoAvatar, iniciales } from '@/lib/avatar';
-import {
-  getDiasDeUso,
-  getEjerciciosResueltosCount,
-  getUserProfile,
-  type UserProfile,
-} from '@/lib/user';
+import { getDiasDeUso, getEjerciciosResueltosCount } from '@/lib/user';
 const colors = Colors.dark;
 
 const URL_CONTACTO = 'https://calculapromedio.cl/contacto';
@@ -36,28 +31,17 @@ export default function PerfilScreen() {
   const insets = useSafeAreaInsets();
   const { usuario, cerrarSesion, eliminarCuenta } = useSesion();
 
-  const [perfil, setPerfil] = useState<UserProfile>({
-    nombre: 'Estudiante',
-    email: '',
-    avatarUrl: null,
-    plan: 'gratis',
-    fechaRegistro: new Date().toISOString(),
-  });
-
-  const [favoritosCount, setFavoritosCount] = useState(5);
-  const [historialCount, setHistorialCount] = useState(12);
-  const [ejerciciosCount, setEjerciciosCount] = useState(8);
-  const [diasUso, setDiasUso] = useState(23);
+  const [favoritosCount, setFavoritosCount] = useState(0);
+  const [historialCount, setHistorialCount] = useState(0);
+  const [ejerciciosCount, setEjerciciosCount] = useState(0);
+  const [diasUso, setDiasUso] = useState(1);
 
   const cargarDatos = useCallback(async () => {
-    const p = await getUserProfile();
-    setPerfil(p);
-
     const favs = await getFavoritos();
-    setFavoritosCount(favs.length > 0 ? favs.length : 5);
+    setFavoritosCount(favs.length);
 
     const hist = await getHistorial();
-    setHistorialCount(hist.length > 0 ? hist.length : 12);
+    setHistorialCount(hist.length);
 
     const ej = await getEjerciciosResueltosCount();
     setEjerciciosCount(ej);
@@ -117,14 +101,14 @@ export default function PerfilScreen() {
     );
   };
 
-  // Datos mostrados: la sesión manda si existe; si no, el perfil local de invitado
-  const nombreMostrado = usuario?.nombre ?? perfil.nombre;
-  const emailMostrado = usuario?.email ?? perfil.email;
+  // Sin cuenta no hay nombre ni correo que mostrar: se presenta como invitado
+  const nombreMostrado = usuario?.nombre ?? 'Cuenta de invitado';
+  const emailMostrado = usuario?.email ?? '';
   const textoRacha = usuario
     ? usuario.racha > 0
       ? `Racha de ${usuario.racha} ${usuario.racha === 1 ? 'día' : 'días'}`
       : 'Empieza tu racha'
-    : 'Invitado';
+    : 'Sin cuenta';
 
   /** Abre el menú de compartir del teléfono con un mensaje para invitar a un compañero. */
   const compartirApp = async () => {
@@ -170,31 +154,43 @@ export default function PerfilScreen() {
           <View style={styles.heroGlowEffect} />
 
           <View style={styles.heroContentRow}>
-            {/* Avatar con botón de cámara */}
+            {/* Avatar: iniciales con cuenta; ícono de persona sin cuenta (no hay nombre) */}
             <View style={styles.avatarWrapper}>
               <LinearGradient
-                colors={degradadoAvatar(usuario?.email ?? usuario?.nombre)}
+                colors={usuario ? degradadoAvatar(usuario.email ?? usuario.nombre) : ['#6366f1', '#3b82f6']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={styles.avatarCircle}>
-                <Text style={styles.avatarIniciales}>{iniciales(usuario?.nombre, usuario?.email)}</Text>
+                {usuario ? (
+                  <Text style={styles.avatarIniciales}>{iniciales(usuario.nombre, usuario.email)}</Text>
+                ) : (
+                  <Ionicons name="person" size={34} color="#e2e8f0" />
+                )}
               </LinearGradient>
-              <Pressable
-                onPress={() => Alert.alert('Cambiar foto', 'Pronto podrás subir tu foto de perfil personalizada.')}
-                hitSlop={6}
-                style={styles.cameraBadge}>
-                <Ionicons name="camera" size={13} color="#ffffff" />
-              </Pressable>
+              {usuario && (
+                <Pressable
+                  onPress={() => Alert.alert('Cambiar foto', 'Pronto podrás subir tu foto de perfil personalizada.')}
+                  hitSlop={6}
+                  style={styles.cameraBadge}>
+                  <Ionicons name="camera" size={13} color="#ffffff" />
+                </Pressable>
+              )}
             </View>
 
             {/* Datos de usuario */}
             <View style={styles.userInfoCol}>
-              <Pressable
-                onPress={() => router.push('/editar-perfil')}
-                style={styles.nameRow}>
-                <Text style={styles.userName}>{nombreMostrado}</Text>
-                <Ionicons name="pencil" size={14} color="#94a3b8" />
-              </Pressable>
+              {usuario ? (
+                <Pressable
+                  onPress={() => router.push('/editar-perfil')}
+                  style={styles.nameRow}>
+                  <Text style={styles.userName}>{nombreMostrado}</Text>
+                  <Ionicons name="pencil" size={14} color="#94a3b8" />
+                </Pressable>
+              ) : (
+                <View style={styles.nameRow}>
+                  <Text style={styles.userName}>{nombreMostrado}</Text>
+                </View>
+              )}
 
               {emailMostrado ? <Text style={styles.userEmail}>{emailMostrado}</Text> : null}
 
