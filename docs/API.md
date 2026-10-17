@@ -185,12 +185,67 @@ Elimina la cuenta de verdad (usuario, metadatos y datos en cascada; todos los to
 
 ---
 
+## POST /resolver-foto
+
+Lee y resuelve un ejercicio a partir de una foto recortada, o recalcula con un texto corregido. Requiere token y tiene **cupo diario por usuario** (ver más abajo). Throttle: 10 por minuto.
+
+**Request (JSON), una de dos formas:**
+
+```json
+{ "imagen": "<base64 de un JPG/PNG, sin prefijo data:>" }
+```
+```json
+{ "expresion": "3/4 + 5/6" }
+```
+
+- `imagen`: máximo ~6 MB en base64. La app la envía ya recortada y a ≤1.600 px de ancho (JPEG, calidad 0,8).
+- `expresion`: texto de hasta 800 caracteres. Se usa cuando el estudiante corrige lo que la IA leyó; no lleva imagen.
+
+**Response 200:**
+
+```json
+{
+  "expresion": "En la figura, ¿cuál es el valor de x? A) 5 B) √7 C) 7 D) 12",
+  "pasos": ["De la figura leo: catetos 3 y 4.", "x² = 3² + 4²", "x = √25 = 5"],
+  "resultado": "5",
+  "alternativa": "A",
+  "conceptos": ["Teorema de Pitágoras: hipotenusa² = cateto1² + cateto2²"],
+  "restantes": 9,
+  "modelo": "anthropic/claude-haiku-5.5",
+  "costo_clp": 0.38
+}
+```
+
+- Todo el texto viene en **texto plano** (fracciones `3/4`, símbolos `²`, `√`); no hay LaTeX.
+- `alternativa`: letra A–E solo si el ejercicio trae alternativas; si no, `null`.
+- `restantes`: fotos que le quedan al usuario hoy. Es `null` cuando la consulta fue solo de texto.
+- `costo_clp`: referencial, para ver el gasto durante las pruebas.
+
+**Errores:**
+
+| Status | Cuándo | Qué hace la app |
+|--------|--------|-----------------|
+| 401 | Sin token o token inválido | Pide iniciar sesión |
+| 422 | Falta `imagen`/`expresion` o la imagen no es JPG/PNG válida | Mensaje de `message` |
+| 429 | Cupo diario agotado o throttle por minuto | Muestra `message` |
+| 502 | El proveedor del modelo falló | "No se pudo analizar la foto" |
+| 503 | Servicio sin configurar (falta la clave en el servidor) | Mensaje de `message` |
+| 504 | El modelo no respondió a tiempo | "El análisis tardó demasiado" |
+
+**Cupos por día (por usuario):** 10 fotos mientras rige la fase gratuita (`PREMIUM_GRATIS_HASTA`); 3 después, sin suscripción; 100 con premium individual. Las correcciones de texto tienen un cupo aparte de 30. Solo se descuenta cuando el análisis sale bien.
+
+**Privacidad:** la foto no se guarda en nuestro servidor; se reenvía al proveedor del modelo (OpenRouter). La app borra sus archivos temporales al terminar. Debe declararse en la política de privacidad.
+
+---
+
 ## Pendientes (no implementados aún)
 
 | Endpoint | Estado |
 |----------|--------|
 | `POST /api/v1/auth/google` | Etapa 3 — login con Google (id_token) |
 | Sincronización de progreso (favoritos, historial, XP) | Fase 4, fuera de la 1.1 |
+| `GET /api/v1/novedades` (público) | Propuesto: avisos publicados desde `/admin` para la campana de la app. Ver `docs/NOTIFICACIONES.md` §2, capa A |
+| `GET /api/v1/notificaciones` (con token) | Propuesto: notificaciones personales de la cuenta (`InAppNotification` de la web). Ver `docs/NOTIFICACIONES.md` §2, capa B |
 
 ## Ejemplos curl
 

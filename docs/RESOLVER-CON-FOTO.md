@@ -3,7 +3,28 @@
 > Función planificada para la **versión 1.2** (requiere Fase 3: login + API Sanctum).
 > Resumen corto en `pagina_con_laravel/docs/MOBILE-ROADMAP.md` §9.2.
 
-Última actualización: 2026-10-13
+Última actualización: 2026-10-17
+
+---
+
+## 0. Estado de implementación (2026-10-17)
+
+> **Lo que sigue (secciones 1 a 7) es el diseño original.** Lo construido hoy es una versión más simple, el "modo rápido" de la sección 3. El enfoque definitivo de la app móvil se definirá aparte y este documento se actualizará entonces.
+
+**Construido y funcionando en pruebas (sin publicar):**
+
+- Flujo de 4 pantallas basado en el diseño en `Downloads\App Mobil Calcula Promedio\Flujo Matematico`: **cámara → recorte → análisis → solución**. Componentes en `src/components/resolver/` y orquestador en `src/app/resolver-foto.tsx`.
+- **Recorte manual** (asas arrastrables con `PanResponder`, rotar, restablecer) en vez de la detección automática de recuadros. El estudiante deja un solo ejercicio; solo se envía el recorte.
+- **Un único endpoint** `POST /api/v1/resolver-foto`, no los dos de la sección 5 (`detectar` / `resolver`). Contrato en `docs/API.md`; lado servidor en `docs/ARQUITECTURA.md` §3.1 del repo Laravel.
+- **Corregir lo leído:** el estudiante puede editar el texto que leyó la IA y recalcular sin foto nueva. Se agregó porque ningún modelo lee letra a mano de forma fiable.
+- **Cuenta obligatoria y cupo diario:** 10 fotos al día mientras rige `PREMIUM_GRATIS_HASTA`, 3 después, 100 con premium. Invitados ven una pantalla que pide iniciar sesión.
+- **Privacidad:** el servidor no guarda fotos; la app borra sus archivos temporales (`src/lib/archivos-temporales.ts`) al escanear otro ejercicio o salir de la pantalla.
+
+**Decisiones tomadas:** modelo vía OpenRouter (Haiku 5.5 para pruebas, ~$0,4 CLP por foto); respuestas en texto plano sin LaTeX; el modelo se cambia desde el `.env` del servidor.
+
+**No construido todavía:** detección automática de recuadros, varios ejercicios por foto, fórmulas con tipografía matemática (hoy `x²` y `√25` en texto), tocar-para-enfocar y zoom en la cámara, recorte que parta en el marco de la cámara, botón de ajustes de permisos, pestañas "Resumen" y "Chat IA" del diseño, "Ver ejercicios similares".
+
+**Antes de publicar:** pruebas con 20–30 fotos reales (guías impresas con figuras), subir las variables `OPENROUTER_*` y `FOTO_LIMITE_*` al `.env` de producción, build nuevo con `expo-camera` y HTTPS (las apps instaladas bloquean HTTP), actualizar la política de privacidad y tests automatizados del endpoint.
 
 ---
 
