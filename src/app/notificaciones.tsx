@@ -16,6 +16,14 @@ const colors = Colors.dark;
 export default function NotificacionesScreen() {
   const { usuario } = useSesion();
   const faltaPerfil = !!usuario && (!usuario.telefono || !usuario.como_nos_conociste);
+  const faltaTelefono = !!usuario && !usuario.telefono;
+  const faltaConociste = !!usuario && !usuario.como_nos_conociste;
+  const descripcionPerfil =
+    faltaTelefono && faltaConociste
+      ? 'Añade tu celular (+569) y cuéntanos cómo nos conociste.'
+      : faltaTelefono
+        ? 'Añade tu celular (+569) para completar tu perfil.'
+        : 'Cuéntanos cómo nos conociste para completar tu perfil.';
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -33,9 +41,7 @@ export default function NotificacionesScreen() {
               </View>
               <View style={styles.cardTexto}>
                 <Text style={styles.cardTitulo}>Completa tu perfil</Text>
-                <Text style={styles.cardDesc}>
-                  Falta tu teléfono y/o contarnos cómo nos conociste. Rellénalo aquí mismo.
-                </Text>
+                <Text style={styles.cardDesc}>{descripcionPerfil}</Text>
               </View>
             </View>
             <FormularioCompletarPerfil />
