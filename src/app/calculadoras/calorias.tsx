@@ -22,7 +22,7 @@ export default function CaloriasScreen() {
   const [datos, setDatos] = useState(DATOS_VACIOS);
   const [nivel, setNivel] = useState<NivelActividad>('1.55');
   const [objetivo, setObjetivo] = useState<Objetivo>('mantener');
-  const p = usePantallaCalculo(CALC_ID, [datos, nivel, objetivo]);
+  const p = usePantallaCalculo(CALC_ID, [datos, nivel, objetivo], (d: { datos: typeof datos; nivel: NivelActividad; objetivo: Objetivo }) => { setDatos(d.datos); setNivel(d.nivel); setObjetivo(d.objetivo); });
   const d = leerDatos(datos);
 
   const calculo = useMemo(() => {
@@ -45,7 +45,7 @@ export default function CaloriasScreen() {
         p.reiniciar();
       }}
       onGuardar={() =>
-        calculo && p.guardar(`${fmtNumero(calculo.kcal, 0)} kcal`, `${objetivo} · P ${fmtNumero(calculo.proteina, 0)} g · G ${fmtNumero(calculo.grasa, 0)} g · C ${fmtNumero(calculo.carbos, 0)} g`)
+        calculo && p.guardar(`${fmtNumero(calculo.kcal, 0)} kcal`, `${objetivo} · P ${fmtNumero(calculo.proteina, 0)} g · G ${fmtNumero(calculo.grasa, 0)} g · C ${fmtNumero(calculo.carbos, 0)} g`, { datos, nivel, objetivo })
       }
       puedeGuardar={p.calculado && calculo !== null}
       guardado={p.guardado}>

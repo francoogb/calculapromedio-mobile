@@ -25,7 +25,7 @@ export default function HorasExtrasScreen() {
   const [sueldo, setSueldo] = useState('');
   const [horas, setHoras] = useState('');
   const [jornada, setJornada] = useState<Jornada>(jornadaVigente());
-  const p = usePantallaCalculo(CALC_ID, [sueldo, horas, jornada]);
+  const p = usePantallaCalculo(CALC_ID, [sueldo, horas, jornada], (d: { sueldo: string; horas: string; jornada: Jornada }) => { setSueldo(d.sueldo); setHoras(d.horas); setJornada(d.jornada); });
 
   const S = leerPesos(sueldo);
   const H = leerNumero(horas);
@@ -49,7 +49,7 @@ export default function HorasExtrasScreen() {
         setHoras('');
         p.reiniciar();
       }}
-      onGuardar={() => calculo && p.guardar(fmtPesos(calculo.total), `${fmtNumero(H)} h extra · jornada ${J} h · hora extra ${fmtPesos(calculo.valorExtra)}`)}
+      onGuardar={() => calculo && p.guardar(fmtPesos(calculo.total), `${fmtNumero(H)} h extra · jornada ${J} h · hora extra ${fmtPesos(calculo.valorExtra)}`, { sueldo, horas, jornada })}
       puedeGuardar={p.calculado && calculo !== null}
       guardado={p.guardado}>
       <AvisoInfo>

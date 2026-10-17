@@ -14,7 +14,7 @@ type Modo = 'agregar' | 'quitar';
 export default function IvaScreen() {
   const [modo, setModo] = useState<Modo>('agregar');
   const [monto, setMonto] = useState('');
-  const p = usePantallaCalculo(CALC_ID, [modo, monto]);
+  const p = usePantallaCalculo(CALC_ID, [modo, monto], (d: { modo: Modo; monto: string }) => { setModo(d.modo); setMonto(d.monto); });
 
   const m = leerPesos(monto);
   const error = monto.trim() !== '' && !(m > 0) ? 'Ingresa un monto mayor a 0' : null;
@@ -39,7 +39,7 @@ export default function IvaScreen() {
         setMonto('');
         p.reiniciar();
       }}
-      onGuardar={() => calculo && p.guardar(fmtPesos(principal), `${modo === 'agregar' ? 'Con IVA' : 'Sin IVA'} · IVA ${fmtPesos(calculo.iva)}`)}
+      onGuardar={() => calculo && p.guardar(fmtPesos(principal), `${modo === 'agregar' ? 'Con IVA' : 'Sin IVA'} · IVA ${fmtPesos(calculo.iva)}`, { modo, monto })}
       puedeGuardar={p.calculado && calculo !== null}
       guardado={p.guardado}>
       <Segmentado

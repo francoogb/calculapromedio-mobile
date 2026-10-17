@@ -51,7 +51,7 @@ type Modo = 'a-romano' | 'a-arabigo';
 export default function NumerosRomanosScreen() {
   const [modo, setModo] = useState<Modo>('a-romano');
   const [texto, setTexto] = useState('');
-  const p = usePantallaCalculo(CALC_ID, [modo, texto]);
+  const p = usePantallaCalculo(CALC_ID, [modo, texto], (d: { modo: Modo; texto: string }) => { setModo(d.modo); setTexto(d.texto); });
 
   const calculo = useMemo(() => {
     if (texto.trim() === '') return null;
@@ -76,7 +76,7 @@ export default function NumerosRomanosScreen() {
         setTexto('');
         p.reiniciar();
       }}
-      onGuardar={() => calculo && !('error' in calculo) && p.guardar(modo === 'a-romano' ? calculo.romano : String(calculo.arabigo), `${calculo.arabigo} = ${calculo.romano}`)}
+      onGuardar={() => calculo && !('error' in calculo) && p.guardar(modo === 'a-romano' ? calculo.romano : String(calculo.arabigo), `${calculo.arabigo} = ${calculo.romano}`, { modo, texto })}
       puedeGuardar={p.calculado && valido}
       guardado={p.guardado}>
       <Segmentado

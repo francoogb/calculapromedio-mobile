@@ -12,7 +12,7 @@ const CALC_ID = 'edad';
 export default function EdadScreen() {
   const [nacimiento, setNacimiento] = useState('');
   const [medicion, setMedicion] = useState(fechaATexto(hoy()));
-  const p = usePantallaCalculo(CALC_ID, [nacimiento, medicion]);
+  const p = usePantallaCalculo(CALC_ID, [nacimiento, medicion], (d: { nacimiento: string; medicion: string }) => { setNacimiento(d.nacimiento); setMedicion(d.medicion); });
 
   const n = leerFecha(nacimiento);
   const m = leerFecha(medicion);
@@ -42,7 +42,7 @@ export default function EdadScreen() {
         setMedicion(fechaATexto(hoy()));
         p.reiniciar();
       }}
-      onGuardar={() => calculo && p.guardar(`${calculo.amd.anios} años`, `${calculo.amd.meses} meses y ${calculo.amd.dias} días · nacido el ${nacimiento}`)}
+      onGuardar={() => calculo && p.guardar(`${calculo.amd.anios} años`, `${calculo.amd.meses} meses y ${calculo.amd.dias} días · nacido el ${nacimiento}`, { nacimiento, medicion })}
       puedeGuardar={p.calculado && calculo !== null}
       guardado={p.guardado}>
       <AvisoInfo>Calcula tu edad exacta en años, meses y días, y cuánto falta para tu próximo cumpleaños.</AvisoInfo>

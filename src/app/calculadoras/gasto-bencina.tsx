@@ -17,7 +17,7 @@ export default function GastoBencinaScreen() {
   const [precio, setPrecio] = useState('');
   const [personas, setPersonas] = useState('1');
   const [idaVuelta, setIdaVuelta] = useState<'no' | 'si'>('no');
-  const p = usePantallaCalculo(CALC_ID, [distancia, consumo, unidad, precio, personas, idaVuelta]);
+  const p = usePantallaCalculo(CALC_ID, [distancia, consumo, unidad, precio, personas, idaVuelta], (d: { distancia: string; consumo: string; unidad: Unidad; precio: string; personas: string; idaVuelta: 'no' | 'si' }) => { setDistancia(d.distancia); setConsumo(d.consumo); setUnidad(d.unidad); setPrecio(d.precio); setPersonas(d.personas); setIdaVuelta(d.idaVuelta); });
 
   const d = leerNumero(distancia);
   const c = leerNumero(consumo);
@@ -44,7 +44,7 @@ export default function GastoBencinaScreen() {
         setPersonas('1');
         p.reiniciar();
       }}
-      onGuardar={() => calculo && p.guardar(fmtPesos(calculo.costo), `${fmtNumero(calculo.km)} km · ${fmtNumero(calculo.litros, 1)} L`)}
+      onGuardar={() => calculo && p.guardar(fmtPesos(calculo.costo), `${fmtNumero(calculo.km)} km · ${fmtNumero(calculo.litros, 1)} L`, { distancia, consumo, unidad, precio, personas, idaVuelta })}
       puedeGuardar={p.calculado && calculo !== null}
       guardado={p.guardado}>
       <AvisoInfo>

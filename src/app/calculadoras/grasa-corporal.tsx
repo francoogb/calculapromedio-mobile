@@ -11,7 +11,7 @@ const CALC_ID = 'grasa-corporal';
 
 export default function GrasaCorporalScreen() {
   const [datos, setDatos] = useState(DATOS_VACIOS);
-  const p = usePantallaCalculo(CALC_ID, [datos]);
+  const p = usePantallaCalculo(CALC_ID, [datos], (d: { datos: typeof datos }) => { setDatos(d.datos); });
   const d = leerDatos(datos);
 
   const calculo = useMemo(() => {
@@ -30,7 +30,7 @@ export default function GrasaCorporalScreen() {
         setDatos(DATOS_VACIOS);
         p.reiniciar();
       }}
-      onGuardar={() => calculo && p.guardar(`${fmtNumero(calculo.pct, 1)}%`, `Grasa corporal · ${calculo.cat.texto}`)}
+      onGuardar={() => calculo && p.guardar(`${fmtNumero(calculo.pct, 1)}%`, `Grasa corporal · ${calculo.cat.texto}`, { datos })}
       puedeGuardar={p.calculado && calculo !== null}
       guardado={p.guardado}>
       <AvisoInfo>

@@ -132,7 +132,7 @@ export default function AreaPerimetroScreen() {
   const [figuraNombre, setFiguraNombre] = useState('Rectángulo');
   const [valores, setValores] = useState<Record<string, string>>({});
   const figura = FIGURAS.find((x) => x.nombre === figuraNombre)!;
-  const p = usePantallaCalculo(CALC_ID, [figuraNombre, valores]);
+  const p = usePantallaCalculo(CALC_ID, [figuraNombre, valores], (d: { figuraNombre: string; valores: Record<string, string> }) => { setFiguraNombre(d.figuraNombre); setValores(d.valores); });
 
   const v: V = {};
   for (const c of figura.campos) v[c.k] = leerNumero(valores[c.k] ?? '');
@@ -172,7 +172,7 @@ export default function AreaPerimetroScreen() {
       onLimpiar={limpiar}
       onGuardar={() =>
         calculo && !('error' in calculo) &&
-        p.guardar(`A = ${fmtNumero(calculo.area, 2)}`, `${figura.nombre}${calculo.perimetro !== null ? ` · P = ${fmtNumero(calculo.perimetro, 2)}` : ''}`)
+        p.guardar(`A = ${fmtNumero(calculo.area, 2)}`, `${figura.nombre}${calculo.perimetro !== null ? ` · P = ${fmtNumero(calculo.perimetro, 2)}` : ''}`, { figuraNombre, valores })
       }
       puedeGuardar={p.calculado && valido}
       guardado={p.guardado}>

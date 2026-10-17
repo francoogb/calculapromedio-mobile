@@ -43,7 +43,7 @@ export default function SumarDiasScreen() {
   const [operacion, setOperacion] = useState<'sumar' | 'restar'>('sumar');
   const [cantidad, setCantidad] = useState('');
   const [unidad, setUnidad] = useState<Unidad>('dias');
-  const p = usePantallaCalculo(CALC_ID, [base, operacion, cantidad, unidad]);
+  const p = usePantallaCalculo(CALC_ID, [base, operacion, cantidad, unidad], (d: { base: string; operacion: 'sumar' | 'restar'; cantidad: string; unidad: Unidad }) => { setBase(d.base); setOperacion(d.operacion); setCantidad(d.cantidad); setUnidad(d.unidad); });
 
   const d = leerFecha(base);
   const c = leerEntero(cantidad);
@@ -73,7 +73,7 @@ export default function SumarDiasScreen() {
         setCantidad('');
         p.reiniciar();
       }}
-      onGuardar={() => calculo && p.guardar(fechaATexto(calculo.resultado), `${base} ${operacion === 'sumar' ? '+' : '−'} ${etiqueta}`)}
+      onGuardar={() => calculo && p.guardar(fechaATexto(calculo.resultado), `${base} ${operacion === 'sumar' ? '+' : '−'} ${etiqueta}`, { base, operacion, cantidad, unidad })}
       puedeGuardar={p.calculado && calculo !== null}
       guardado={p.guardado}>
       <AvisoInfo>Suma o resta días, semanas, meses o años a una fecha. Útil para plazos, entregas y vencimientos.</AvisoInfo>

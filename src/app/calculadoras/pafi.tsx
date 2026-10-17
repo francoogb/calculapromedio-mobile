@@ -19,7 +19,7 @@ function clasificar(pafi: number): { texto: string; tono: Tono } {
 export default function PafiScreen() {
   const [pao2, setPao2] = useState('');
   const [fio2, setFio2] = useState('');
-  const p = usePantallaCalculo(CALC_ID, [pao2, fio2]);
+  const p = usePantallaCalculo(CALC_ID, [pao2, fio2], (d: { pao2: string; fio2: string }) => { setPao2(d.pao2); setFio2(d.fio2); });
 
   const pa = leerNumero(pao2);
   const fi = leerNumero(fio2);
@@ -41,7 +41,7 @@ export default function PafiScreen() {
         setFio2('');
         p.reiniciar();
       }}
-      onGuardar={() => calculo && p.guardar(fmtNumero(calculo.valor, 0), `${calculo.texto} · PaO₂ ${fmtNumero(pa)} / FiO₂ ${fmtNumero(fi)}%`)}
+      onGuardar={() => calculo && p.guardar(fmtNumero(calculo.valor, 0), `${calculo.texto} · PaO₂ ${fmtNumero(pa)} / FiO₂ ${fmtNumero(fi)}%`, { pao2, fio2 })}
       puedeGuardar={p.calculado && calculo !== null}
       guardado={p.guardado}>
       <AvisoInfo>

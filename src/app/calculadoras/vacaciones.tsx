@@ -18,7 +18,7 @@ export default function VacacionesScreen() {
   const [zona, setZona] = useState<Zona>('normal');
   const [previos, setPrevios] = useState('');
   const [tomados, setTomados] = useState('');
-  const p = usePantallaCalculo(CALC_ID, [inicio, referencia, zona, previos, tomados]);
+  const p = usePantallaCalculo(CALC_ID, [inicio, referencia, zona, previos, tomados], (d: { inicio: string; referencia: string; zona: Zona; previos: string; tomados: string }) => { setInicio(d.inicio); setReferencia(d.referencia); setZona(d.zona); setPrevios(d.previos); setTomados(d.tomados); });
 
   const dIni = leerFecha(inicio);
   const dRef = leerFecha(referencia);
@@ -73,7 +73,7 @@ export default function VacacionesScreen() {
         setTomados('');
         p.reiniciar();
       }}
-      onGuardar={() => calculo && p.guardar(`${calculo.saldo} días`, `Vacaciones · ${tiempoTexto} trabajado · ${calculo.derechoAnual} días/año`)}
+      onGuardar={() => calculo && p.guardar(`${calculo.saldo} días`, `Vacaciones · ${tiempoTexto} trabajado · ${calculo.derechoAnual} días/año`, { inicio, referencia, zona, previos, tomados })}
       puedeGuardar={p.calculado && calculo !== null}
       guardado={p.guardado}>
       <AvisoInfo>

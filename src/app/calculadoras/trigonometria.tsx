@@ -27,7 +27,7 @@ export default function TrigonometriaScreen() {
   const [angulo, setAngulo] = useState('');
   const [lado, setLado] = useState('');
   const [conocido, setConocido] = useState<LadoConocido>('hipotenusa');
-  const p = usePantallaCalculo(CALC_ID, [modo, angulo, lado, conocido]);
+  const p = usePantallaCalculo(CALC_ID, [modo, angulo, lado, conocido], (d: { modo: Modo; angulo: string; lado: string; conocido: LadoConocido }) => { setModo(d.modo); setAngulo(d.angulo); setLado(d.lado); setConocido(d.conocido); });
 
   const a = leerNumero(angulo);
   const l = leerNumero(lado);
@@ -97,8 +97,8 @@ export default function TrigonometriaScreen() {
         p.reiniciar();
       }}
       onGuardar={() => {
-        if (razones) p.guardar(`sen ${f(a)}° = ${f(razones.s)}`, `cos ${f(razones.c)} · tan ${razones.t === null ? '∞' : f(razones.t)}`);
-        else if (triangulo) p.guardar(`hip ${f(triangulo.hip, 2)}`, `α ${f(a)}° · op ${f(triangulo.op, 2)} · ady ${f(triangulo.ad, 2)}`);
+        if (razones) p.guardar(`sen ${f(a)}° = ${f(razones.s)}`, `cos ${f(razones.c)} · tan ${razones.t === null ? '∞' : f(razones.t)}`, { modo, angulo, lado, conocido });
+        else if (triangulo) p.guardar(`hip ${f(triangulo.hip, 2)}`, `α ${f(a)}° · op ${f(triangulo.op, 2)} · ady ${f(triangulo.ad, 2)}`, { modo, angulo, lado, conocido });
       }}
       puedeGuardar={p.calculado && listo}
       guardado={p.guardado}>

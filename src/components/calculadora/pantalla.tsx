@@ -11,6 +11,7 @@ import {
 import { HeaderCalculadora } from '@/components/calculadora/header-calculadora';
 import { BarraAcciones } from '@/components/calculadora/piezas';
 import { Colors, ContenidoCentrado, Spacing } from '@/constants/theme';
+import { useRestaurarEntrada } from '@/hooks/use-restaurar-entrada';
 import { guardarEnHistorial } from '@/lib/storage';
 
 const colors = Colors.dark;
@@ -18,8 +19,13 @@ const colors = Colors.dark;
 /**
  * Estado común de una calculadora: revelar resultado, scroll hasta él y guardar en historial.
  * `dependencias`: valores de entrada; si cambian, el botón "Guardado" vuelve a "Guardar".
+ * `restaurar` (opcional): vuelve a poner los campos cuando el cálculo se abre desde "Cálculos guardados".
  */
-export function usePantallaCalculo(calculadoraId: string, dependencias: unknown[]) {
+export function usePantallaCalculo<T = unknown>(
+  calculadoraId: string,
+  dependencias: unknown[],
+  restaurar?: (datos: T) => void
+) {
   const [calculado, setCalculado] = useState(false);
   const [guardado, setGuardado] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
@@ -29,6 +35,12 @@ export function usePantallaCalculo(calculadoraId: string, dependencias: unknown[
     setGuardado(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, dependencias);
+
+  // Al abrir desde el historial: llena los campos y muestra el resultado
+  useRestaurarEntrada<T>((datos) => {
+    restaurar?.(datos);
+    setCalculado(true);
+  });
 
   const calcular = () => {
     setCalculado(true);

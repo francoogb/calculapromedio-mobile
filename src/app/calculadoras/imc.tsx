@@ -21,7 +21,7 @@ const TRAMOS = [
 
 export default function ImcScreen() {
   const [datos, setDatos] = useState(DATOS_VACIOS);
-  const p = usePantallaCalculo(CALC_ID, [datos]);
+  const p = usePantallaCalculo(CALC_ID, [datos], (d: { datos: typeof datos }) => { setDatos(d.datos); });
   const d = leerDatos(datos, false);
 
   const calculo = useMemo(() => {
@@ -39,7 +39,7 @@ export default function ImcScreen() {
         setDatos(DATOS_VACIOS);
         p.reiniciar();
       }}
-      onGuardar={() => calculo && p.guardar(fmtNumero(calculo.valor, 1), `${calculo.cat.texto} · ${d.peso} kg, ${d.altura} cm`)}
+      onGuardar={() => calculo && p.guardar(fmtNumero(calculo.valor, 1), `${calculo.cat.texto} · ${d.peso} kg, ${d.altura} cm`, { datos })}
       puedeGuardar={p.calculado && calculo !== null}
       guardado={p.guardado}>
       <AvisoInfo>

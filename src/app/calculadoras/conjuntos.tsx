@@ -36,7 +36,7 @@ const llaves = (xs: string[]) => (xs.length ? `{ ${ordenar(xs).join(', ')} }` : 
 export default function ConjuntosScreen() {
   const [textoA, setTextoA] = useState('');
   const [textoB, setTextoB] = useState('');
-  const p = usePantallaCalculo(CALC_ID, [textoA, textoB]);
+  const p = usePantallaCalculo(CALC_ID, [textoA, textoB], (d: { textoA: string; textoB: string }) => { setTextoA(d.textoA); setTextoB(d.textoB); });
 
   const calculo = useMemo(() => {
     const A = parsear(textoA);
@@ -60,7 +60,7 @@ export default function ConjuntosScreen() {
         setTextoB('');
         p.reiniciar();
       }}
-      onGuardar={() => calculo && p.guardar(`|A∪B| = ${calculo.union.length}`, `A∩B = ${llaves(calculo.interseccion)}`)}
+      onGuardar={() => calculo && p.guardar(`|A∪B| = ${calculo.union.length}`, `A∩B = ${llaves(calculo.interseccion)}`, { textoA, textoB })}
       puedeGuardar={p.calculado && calculo !== null}
       guardado={p.guardado}>
       <AvisoInfo>

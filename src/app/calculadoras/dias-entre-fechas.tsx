@@ -12,7 +12,7 @@ const CALC_ID = 'dias-entre-fechas';
 export default function DiasEntreFechasScreen() {
   const [inicio, setInicio] = useState(fechaATexto(hoy()));
   const [fin, setFin] = useState('');
-  const p = usePantallaCalculo(CALC_ID, [inicio, fin]);
+  const p = usePantallaCalculo(CALC_ID, [inicio, fin], (d: { inicio: string; fin: string }) => { setInicio(d.inicio); setFin(d.fin); });
 
   const a = leerFecha(inicio);
   const b = leerFecha(fin);
@@ -53,7 +53,7 @@ export default function DiasEntreFechasScreen() {
         setFin('');
         p.reiniciar();
       }}
-      onGuardar={() => calculo && p.guardar(`${fmtNumero(calculo.dias)} días`, `${fechaATexto(calculo.ini)} → ${fechaATexto(calculo.fn)}`)}
+      onGuardar={() => calculo && p.guardar(`${fmtNumero(calculo.dias)} días`, `${fechaATexto(calculo.ini)} → ${fechaATexto(calculo.fn)}`, { inicio, fin })}
       puedeGuardar={p.calculado && calculo !== null}
       guardado={p.guardado}>
       <AvisoInfo>

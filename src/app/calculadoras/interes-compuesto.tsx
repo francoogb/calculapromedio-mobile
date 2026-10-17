@@ -25,7 +25,7 @@ export default function InteresCompuestoScreen() {
   const [tasa, setTasa] = useState('');
   const [anios, setAnios] = useState('');
   const [frec, setFrec] = useState<Frecuencia>('12');
-  const p = usePantallaCalculo(CALC_ID, [capital, aporte, tasa, anios, frec]);
+  const p = usePantallaCalculo(CALC_ID, [capital, aporte, tasa, anios, frec], (d: { capital: string; aporte: string; tasa: string; anios: string; frec: Frecuencia }) => { setCapital(d.capital); setAporte(d.aporte); setTasa(d.tasa); setAnios(d.anios); setFrec(d.frec); });
 
   const P = leerPesos(capital);
   const A = aporte.trim() === '' ? 0 : leerPesos(aporte);
@@ -68,7 +68,7 @@ export default function InteresCompuestoScreen() {
         setAnios('');
         p.reiniciar();
       }}
-      onGuardar={() => calculo && p.guardar(fmtPesos(calculo.total), `${t} años al ${fmtNumero(r)}% · interés ${fmtPesos(calculo.interes)}`)}
+      onGuardar={() => calculo && p.guardar(fmtPesos(calculo.total), `${t} años al ${fmtNumero(r)}% · interés ${fmtPesos(calculo.interes)}`, { capital, aporte, tasa, anios, frec })}
       puedeGuardar={p.calculado && calculo !== null}
       guardado={p.guardado}>
       <AvisoInfo>

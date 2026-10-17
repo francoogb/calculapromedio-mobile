@@ -102,7 +102,7 @@ export default function VolumenScreen() {
   const [nombre, setNombre] = useState('Cilindro');
   const [valores, setValores] = useState<Record<string, string>>({});
   const cuerpo = CUERPOS.find((c) => c.nombre === nombre)!;
-  const p = usePantallaCalculo(CALC_ID, [nombre, valores]);
+  const p = usePantallaCalculo(CALC_ID, [nombre, valores], (d: { nombre: string; valores: Record<string, string> }) => { setNombre(d.nombre); setValores(d.valores); });
 
   const v: V = {};
   for (const c of cuerpo.campos) v[c.k] = leerNumero(valores[c.k] ?? '');
@@ -131,7 +131,7 @@ export default function VolumenScreen() {
         setValores({});
         p.reiniciar();
       }}
-      onGuardar={() => calculo && p.guardar(`V = ${fmtNumero(calculo.volumen, 2)}`, `${cuerpo.nombre} · área ${fmtNumero(calculo.area, 2)}`)}
+      onGuardar={() => calculo && p.guardar(`V = ${fmtNumero(calculo.volumen, 2)}`, `${cuerpo.nombre} · área ${fmtNumero(calculo.area, 2)}`, { nombre, valores })}
       puedeGuardar={p.calculado && calculo !== null}
       guardado={p.guardado}>
       <AvisoInfo>

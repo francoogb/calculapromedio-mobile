@@ -23,7 +23,7 @@ const MAXIMO = Number.MAX_SAFE_INTEGER;
 export default function BasesNumericasScreen() {
   const [base, setBase] = useState<Base>('10');
   const [texto, setTexto] = useState('');
-  const p = usePantallaCalculo(CALC_ID, [base, texto]);
+  const p = usePantallaCalculo(CALC_ID, [base, texto], (d: { base: Base; texto: string }) => { setBase(d.base); setTexto(d.texto); });
   const info = BASES.find((b) => b.id === base)!;
 
   const calculo = useMemo(() => {
@@ -63,7 +63,7 @@ export default function BasesNumericasScreen() {
         setTexto('');
         p.reiniciar();
       }}
-      onGuardar={() => calculo && !('error' in calculo) && p.guardar(calculo.conv['2'], `${calculo.conv['10']} = 0x${calculo.conv['16']}`)}
+      onGuardar={() => calculo && !('error' in calculo) && p.guardar(calculo.conv['2'], `${calculo.conv['10']} = 0x${calculo.conv['16']}`, { base, texto })}
       puedeGuardar={p.calculado && valido}
       guardado={p.guardado}>
       <AvisoInfo>

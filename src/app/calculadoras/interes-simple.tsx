@@ -17,7 +17,7 @@ export default function InteresSimpleScreen() {
   const [tasa, setTasa] = useState('');
   const [tiempo, setTiempo] = useState('');
   const [unidad, setUnidad] = useState<Unidad>('anios');
-  const p = usePantallaCalculo(CALC_ID, [capital, tasa, tiempo, unidad]);
+  const p = usePantallaCalculo(CALC_ID, [capital, tasa, tiempo, unidad], (d: { capital: string; tasa: string; tiempo: string; unidad: Unidad }) => { setCapital(d.capital); setTasa(d.tasa); setTiempo(d.tiempo); setUnidad(d.unidad); });
 
   const C = leerPesos(capital);
   const r = leerNumero(tasa);
@@ -41,7 +41,7 @@ export default function InteresSimpleScreen() {
         setTiempo('');
         p.reiniciar();
       }}
-      onGuardar={() => calculo && p.guardar(fmtPesos(calculo.final), `${fmtPesos(C)} al ${fmtNumero(r)}% anual · ${fmtNumero(t)} ${NOMBRE[unidad]}`)}
+      onGuardar={() => calculo && p.guardar(fmtPesos(calculo.final), `${fmtPesos(C)} al ${fmtNumero(r)}% anual · ${fmtNumero(t)} ${NOMBRE[unidad]}`, { capital, tasa, tiempo, unidad })}
       puedeGuardar={p.calculado && calculo !== null}
       guardado={p.guardado}>
       <AvisoInfo>

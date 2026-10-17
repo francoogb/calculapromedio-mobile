@@ -16,7 +16,7 @@ const colors = Colors.dark;
 export default function TmbScreen() {
   const [datos, setDatos] = useState(DATOS_VACIOS);
   const [nivel, setNivel] = useState<NivelActividad>('1.55');
-  const p = usePantallaCalculo(CALC_ID, [datos, nivel]);
+  const p = usePantallaCalculo(CALC_ID, [datos, nivel], (d: { datos: typeof datos; nivel: NivelActividad }) => { setDatos(d.datos); setNivel(d.nivel); });
   const d = leerDatos(datos);
 
   const calculo = useMemo(() => {
@@ -35,7 +35,7 @@ export default function TmbScreen() {
         setDatos(DATOS_VACIOS);
         p.reiniciar();
       }}
-      onGuardar={() => calculo && p.guardar(`${fmtNumero(calculo.tmb, 0)} kcal`, `TMB · gasto diario ${fmtNumero(calculo.gasto, 0)} kcal (${detalleNivel.texto})`)}
+      onGuardar={() => calculo && p.guardar(`${fmtNumero(calculo.tmb, 0)} kcal`, `TMB · gasto diario ${fmtNumero(calculo.gasto, 0)} kcal (${detalleNivel.texto})`, { datos, nivel })}
       puedeGuardar={p.calculado && calculo !== null}
       guardado={p.guardado}>
       <AvisoInfo>

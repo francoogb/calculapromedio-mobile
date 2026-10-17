@@ -25,7 +25,7 @@ export default function FuncionLinealScreen() {
   const [b1, setB1] = useState('');
   const [m2, setM2] = useState('');
   const [b2, setB2] = useState('');
-  const p = usePantallaCalculo(CALC_ID, [m1, b1, m2, b2]);
+  const p = usePantallaCalculo(CALC_ID, [m1, b1, m2, b2], (d: { m1: string; b1: string; m2: string; b2: string }) => { setM1(d.m1); setB1(d.b1); setM2(d.m2); setB2(d.b2); });
 
   const v = { m1: leerNumero(m1), b1: leerNumero(b1), m2: leerNumero(m2), b2: leerNumero(b2) };
   const tieneF2 = m2.trim() !== '' || b2.trim() !== '';
@@ -109,7 +109,7 @@ export default function FuncionLinealScreen() {
         setB2('');
         p.reiniciar();
       }}
-      onGuardar={() => calculo && p.guardar(valor, tieneF2 ? `${expresion(v.m1, v.b1, 'f')} y ${expresion(v.m2, v.b2, 'g')}` : 'Función lineal')}
+      onGuardar={() => calculo && p.guardar(valor, tieneF2 ? `${expresion(v.m1, v.b1, 'f')} y ${expresion(v.m2, v.b2, 'g')}` : 'Función lineal', { m1, b1, m2, b2 })}
       puedeGuardar={p.calculado && calculo !== null}
       guardado={p.guardado}>
       <AvisoInfo>

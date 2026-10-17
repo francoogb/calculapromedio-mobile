@@ -28,7 +28,7 @@ export default function BoletaHonorariosScreen() {
   const [monto, setMonto] = useState('');
   const [tipo, setTipo] = useState<Tipo>('bruto');
   const [anio, setAnio] = useState(ANIO_ACTUAL);
-  const p = usePantallaCalculo(CALC_ID, [monto, tipo, anio]);
+  const p = usePantallaCalculo(CALC_ID, [monto, tipo, anio], (d: { monto: string; tipo: Tipo; anio: string }) => { setMonto(d.monto); setTipo(d.tipo); setAnio(d.anio); });
 
   const m = leerPesos(monto);
   const tasa = RETENCION[anio];
@@ -53,7 +53,7 @@ export default function BoletaHonorariosScreen() {
         p.reiniciar();
       }}
       onGuardar={() =>
-        calculo && p.guardar(tipo === 'bruto' ? fmtPesos(calculo.liquido) : fmtPesos(calculo.bruto), `${tipo === 'bruto' ? 'Líquido' : 'Bruto a emitir'} · retención ${pct(tasa)} (${anio})`)
+        calculo && p.guardar(tipo === 'bruto' ? fmtPesos(calculo.liquido) : fmtPesos(calculo.bruto), `${tipo === 'bruto' ? 'Líquido' : 'Bruto a emitir'} · retención ${pct(tasa)} (${anio})`, { monto, tipo, anio })
       }
       puedeGuardar={p.calculado && calculo !== null}
       guardado={p.guardado}>

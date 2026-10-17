@@ -17,7 +17,7 @@ const VACIO: Coefs = { a1: '', b1: '', c1: '', a2: '', b2: '', c2: '' };
 
 export default function SistemasEcuacionesScreen() {
   const [k, setK] = useState<Coefs>(VACIO);
-  const p = usePantallaCalculo(CALC_ID, [k]);
+  const p = usePantallaCalculo(CALC_ID, [k], (d: { k: Coefs }) => { setK(d.k); });
   const n = Object.fromEntries(Object.entries(k).map(([key, v]) => [key, leerNumero(v)])) as Record<keyof Coefs, number>;
 
   const calculo = useMemo(() => {
@@ -56,7 +56,7 @@ export default function SistemasEcuacionesScreen() {
         p.guardar(
           calculo.tipo === 'unica' ? `x = ${f(calculo.x!)}, y = ${f(calculo.y!)}` : calculo.tipo === 'sin' ? 'Sin solución' : 'Infinitas',
           `${k.a1}x + ${k.b1}y = ${k.c1} · ${k.a2}x + ${k.b2}y = ${k.c2}`
-        )
+        , { k })
       }
       puedeGuardar={p.calculado && calculo !== null}
       guardado={p.guardado}>

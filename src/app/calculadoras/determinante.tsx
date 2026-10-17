@@ -23,7 +23,7 @@ const EJEMPLO: Record<Tam, string[][]> = {
 export default function DeterminanteScreen() {
   const [tam, setTam] = useState<Tam>('3');
   const [m, setM] = useState<string[][]>(() => vacia('3'));
-  const p = usePantallaCalculo(CALC_ID, [tam, m]);
+  const p = usePantallaCalculo(CALC_ID, [tam, m], (d: { tam: Tam; m: string[][] }) => { setTam(d.tam); setM(d.m); });
 
   const calculo = useMemo(() => {
     const v = m.map((fila) => fila.map(leerNumero));
@@ -72,7 +72,7 @@ export default function DeterminanteScreen() {
         setM(vacia(tam));
         p.reiniciar();
       }}
-      onGuardar={() => calculo && p.guardar(f(calculo.det), `Determinante ${tam}×${tam}`)}
+      onGuardar={() => calculo && p.guardar(f(calculo.det), `Determinante ${tam}×${tam}`, { tam, m })}
       puedeGuardar={p.calculado && calculo !== null}
       guardado={p.guardado}>
       <Segmentado
