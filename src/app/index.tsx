@@ -97,7 +97,7 @@ const BANNERS: Banner[] = [
 
 /** Funciones en camino (tarjeta informativa al final del home). */
 const NOVEDADES: { icono: keyof typeof Ionicons.glyphMap; texto: string }[] = [
-  { icono: 'camera-outline', texto: 'Resolver con una foto' },
+  { icono: 'trophy-outline', texto: 'Liga semanal con premios' },
   { icono: 'book-outline', texto: 'Teoría PAES' },
   { icono: 'timer-outline', texto: 'Simulacros y banco de preguntas' },
   { icono: 'chatbubbles-outline', texto: 'Tutor IA' },
