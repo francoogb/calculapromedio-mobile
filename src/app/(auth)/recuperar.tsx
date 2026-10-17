@@ -1,46 +1,127 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
-import * as WebBrowser from 'expo-web-browser';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { CabeceraCuenta } from '@/components/cuenta/campos';
+import { BotonEnviar, BotonVolver, CampoTexto, ErrorGeneral, EstadoCuenta } from '@/components/cuenta/campos';
+import { FondoDecorativo } from '@/components/cuenta/fondo';
 import { Colors, ContenidoCentrado, Spacing } from '@/constants/theme';
+import { ApiError, apiFetch } from '@/lib/api';
+import { sugerirCorreo, tieneFormatoDeCorreo } from '@/lib/validacion';
 
 const colors = Colors.dark;
 
-/** La recuperación de contraseña vive en la web (misma base de usuarios). */
-const URL_RECUPERAR = 'https://calculapromedio.cl/forgot-password';
-
 export default function RecuperarScreen() {
+  const insets = useSafeAreaInsets();
+  const [email, setEmail] = useState('');
+  const [errorCampo, setErrorCampo] = useState<string | undefined>();
+  const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
+  const [cargando, setCargando] = useState(false);
+  /** Correo al que se envió el enlace; si no es null se muestra la confirmación. */
+  const [enviadoA, setEnviadoA] = useState<string | null>(null);
+
+  /** Pide a la API que envíe el enlace. La contraseña nueva se escribe en la web. */
+  async function enviarCorreo(correo: string) {
+    if (cargando) return;
+    setErrorCampo(undefined);
+    setErrorGeneral(null);
+    setCargando(true);
+    try {
+      await apiFetch('/forgot-password', { method: 'POST', auth: false, body: { email: correo } });
+      setEnviadoA(correo);
+    } catch (e) {
+      if (e instanceof ApiError) {
+        const mensajeCorreo = e.errorDe('email');
+        if (mensajeCorreo) {
+          setErrorCampo(mensajeCorreo);
+        } else {
+          setErrorGeneral(e.message);
+        }
+      } else {
+        setErrorGeneral('Ocurrió un error inesperado. Inténtalo de nuevo.');
+      }
+    } finally {
+      setCargando(false);
+    }
+  }
+
+  async function enviar() {
+    if (cargando) return;
+    setErrorCampo(undefined);
+    setErrorGeneral(null);
+
+    const correo = email.trim();
+    // Solo el formato: un dominio poco común no se bloquea, la API dice si la cuenta existe
+    if (!tieneFormatoDeCorreo(correo)) {
+      setErrorCampo('Escribe un correo válido, por ejemplo nombre@correo.cl');
+      return;
+    }
+    const sugerencia = sugerirCorreo(correo);
+    if (sugerencia) {
+      // Dominio con typo probable (p. ej. gmal.com): ofrecer la corrección, sin obligarla
+      Alert.alert('Revisa tu correo', `¿Quisiste decir ${sugerencia}?`, [
+        { text: `Usar ${sugerencia}`, onPress: () => setEmail(sugerencia) },
+        { text: 'Continuar igual', onPress: () => enviarCorreo(correo) },
+      ]);
+      return;
+    }
+    await enviarCorreo(correo);
+  }
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <StatusBar style="light" />
-      <CabeceraCuenta titulo="Recuperar contraseña" />
+      <FondoDecorativo />
 
-      <ScrollView
-        contentContainerStyle={[styles.scroll, ContenidoCentrado]}
-        showsVerticalScrollIndicator={false}>
-        <View style={styles.iconoWrap}>
-          <Ionicons name="lock-open-outline" size={40} color="#a78bfa" />
-        </View>
-        <Text style={styles.titulo}>¿Olvidaste tu contraseña?</Text>
-        <Text style={styles.subtitulo}>
-          Te enviaremos un correo con un enlace para restablecerla. Usa el mismo correo con el que
-          creaste tu cuenta.
-        </Text>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScrollView
+          contentContainerStyle={[styles.scroll, ContenidoCentrado, { paddingTop: insets.top + Spacing.three }]}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}>
+          <BotonVolver />
 
-        <Pressable
-          onPress={() => WebBrowser.openBrowserAsync(URL_RECUPERAR)}
-          style={({ pressed }) => [styles.boton, { opacity: pressed ? 0.85 : 1 }]}>
-          <Text style={styles.botonTexto}>Abrir recuperación en la web</Text>
-          <Ionicons name="open-outline" size={18} color="#ffffff" />
-        </Pressable>
+          {enviadoA ? (
+            <EstadoCuenta
+              titulo="Revisa tu correo"
+              texto={
+                <>
+                  Enviamos un enlace a <Text style={styles.correoEnviado}>{enviadoA}</Text>. Ábrelo para crear tu
+                  contraseña nueva. Si no lo ves, revisa la carpeta de spam.
+                </>
+              }
+              etiquetaBoton="Volver a iniciar sesión"
+              onBoton={() => router.back()}
+              enlace={{ etiqueta: 'Usar otro correo', onPress: () => setEnviadoA(null) }}
+            />
+          ) : (
+            <>
+              <Text style={styles.titulo}>¿Olvidaste tu contraseña?</Text>
+              <Text style={styles.subtitulo}>No te preocupes, te enviaremos un enlace para recuperarla.</Text>
 
-        <Pressable onPress={() => router.back()} hitSlop={8} style={styles.volver}>
-          <Text style={styles.volverTexto}>Volver a iniciar sesión</Text>
-        </Pressable>
-      </ScrollView>
+              <View style={styles.formulario}>
+                <CampoTexto
+                  label="Correo electrónico"
+                  icono="mail-outline"
+                  value={email}
+                  onChangeText={setEmail}
+                  placeholder="tu@correo.cl"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoComplete="email"
+                  autoFocus
+                  error={errorCampo}
+                  onSubmitEditing={enviar}
+                />
+
+                {errorGeneral && <ErrorGeneral mensaje={errorGeneral} />}
+
+                <BotonEnviar label="Enviar enlace de recuperación" onPress={enviar} cargando={cargando} />
+              </View>
+            </>
+          )}
+        </ScrollView>
+      </KeyboardAvoidingView>
     </View>
   );
 }
@@ -51,55 +132,26 @@ const styles = StyleSheet.create({
   },
   scroll: {
     paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.six,
+    paddingBottom: Spacing.six,
     gap: Spacing.three,
-    alignItems: 'center',
-  },
-  iconoWrap: {
-    width: 76,
-    height: 76,
-    borderRadius: 38,
-    backgroundColor: 'rgba(167, 139, 250, 0.12)',
-    borderWidth: 1,
-    borderColor: 'rgba(167, 139, 250, 0.3)',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   titulo: {
     color: '#ffffff',
-    fontSize: 24,
+    fontSize: 34,
     fontWeight: '800',
-    letterSpacing: -0.4,
-    textAlign: 'center',
+    letterSpacing: -0.6,
   },
   subtitulo: {
     color: colors.textMuted,
-    fontSize: 14,
-    lineHeight: 20,
-    textAlign: 'center',
-  },
-  boton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    height: 54,
-    borderRadius: 14,
-    backgroundColor: colors.primary,
-    alignSelf: 'stretch',
-    marginTop: Spacing.two,
-  },
-  botonTexto: {
-    color: '#ffffff',
     fontSize: 16,
+    lineHeight: 24,
+  },
+  correoEnviado: {
+    color: '#ffffff',
     fontWeight: '700',
   },
-  volver: {
-    paddingVertical: Spacing.two,
-  },
-  volverTexto: {
-    color: '#a78bfa',
-    fontSize: 14,
-    fontWeight: '600',
+  formulario: {
+    gap: Spacing.three,
+    marginTop: Spacing.three,
   },
 });

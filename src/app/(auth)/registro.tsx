@@ -2,26 +2,30 @@ import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BotonEnviar, CabeceraCuenta, CampoTexto, ErrorGeneral } from '@/components/cuenta/campos';
+import { BotonEnviar, BotonVolver, CampoTexto, EnlaceAlternativo, ErrorGeneral } from '@/components/cuenta/campos';
+import { FondoDecorativo } from '@/components/cuenta/fondo';
 import { Colors, ContenidoCentrado, Spacing } from '@/constants/theme';
 import { useSesion } from '@/context/sesion';
 import { ApiError, type ErroresValidacion } from '@/lib/api';
+import { entrarAlInicio, salirDePantallasDeCuenta } from '@/lib/navegacion';
 import { esCorreoValido, sugerirCorreo } from '@/lib/validacion';
 
 const colors = Colors.dark;
 
 export default function RegistroScreen() {
   const { crearCuenta } = useSesion();
+  const insets = useSafeAreaInsets();
   const [nombre, setNombre] = useState('');
+  const [apellido, setApellido] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [passwordConfirm, setPasswordConfirm] = useState('');
   const [errores, setErrores] = useState<ErroresValidacion>({});
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
   const [cargando, setCargando] = useState(false);
 
-  /** Llama a la API con un correo ya validado. */
+  /** Llama a la API con un correo ya validado. La API guarda un solo campo `nombre`. */
   async function enviarCorreo(correo: string) {
     if (cargando) return;
     setErrores({});
@@ -29,13 +33,13 @@ export default function RegistroScreen() {
     setCargando(true);
     try {
       await crearCuenta({
-        nombre: nombre.trim(),
+        nombre: `${nombre.trim()} ${apellido.trim()}`,
         email: correo,
         password,
-        password_confirmation: passwordConfirm,
+        // La API exige confirmación; con el ojo para ver la contraseña no se pide escribirla dos veces
+        password_confirmation: password,
       });
-      router.dismissAll();
-      router.replace('/');
+      entrarAlInicio();
     } catch (e) {
       if (e instanceof ApiError) {
         if (Object.keys(e.errores).length > 0) {
@@ -55,6 +59,14 @@ export default function RegistroScreen() {
     if (cargando) return;
     setErrores({});
     setErrorGeneral(null);
+
+    const faltantes: ErroresValidacion = {};
+    if (!nombre.trim()) faltantes.nombre = ['Ingresa tu nombre'];
+    if (!apellido.trim()) faltantes.apellido = ['Ingresa tu apellido'];
+    if (Object.keys(faltantes).length > 0) {
+      setErrores(faltantes);
+      return;
+    }
 
     const correo = email.trim();
     if (!esCorreoValido(correo)) {
@@ -87,21 +99,21 @@ export default function RegistroScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <StatusBar style="light" />
-      <CabeceraCuenta titulo="Crear cuenta" />
+      <FondoDecorativo />
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView
-          contentContainerStyle={[styles.scroll, ContenidoCentrado]}
+          contentContainerStyle={[styles.scroll, ContenidoCentrado, { paddingTop: insets.top + Spacing.three }]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}>
-          <Text style={styles.titulo}>Crea tu cuenta gratis</Text>
-          <Text style={styles.subtitulo}>
-            Es la misma cuenta que usas en calculapromedio.cl. Recibes 5 días de premium de regalo.
-          </Text>
+          <BotonVolver />
+          <Text style={styles.titulo}>Crear una nueva cuenta</Text>
+          <Text style={styles.subtitulo}>Recibes 5 días de premium de regalo al registrarte.</Text>
 
           <View style={styles.formulario}>
             <CampoTexto
               label="Nombre"
+              icono="person-outline"
               value={nombre}
               onChangeText={setNombre}
               placeholder="Tu nombre"
@@ -110,10 +122,19 @@ export default function RegistroScreen() {
               error={errores.nombre?.[0]}
             />
             <CampoTexto
+              label="Apellido"
+              icono="person-outline"
+              value={apellido}
+              onChangeText={setApellido}
+              placeholder="Tu apellido"
+              error={errores.apellido?.[0]}
+            />
+            <CampoTexto
               label="Correo electrónico"
+              icono="mail-outline"
               value={email}
               onChangeText={setEmail}
-              placeholder="tucorreo@ejemplo.cl"
+              placeholder="tu@correo.cl"
               keyboardType="email-address"
               autoCapitalize="none"
               autoComplete="email"
@@ -121,21 +142,13 @@ export default function RegistroScreen() {
             />
             <CampoTexto
               label="Contraseña"
+              icono="lock-closed-outline"
               value={password}
               onChangeText={setPassword}
               placeholder="Mínimo 8 caracteres"
               secureTextEntry
               autoComplete="password"
               error={errores.password?.[0]}
-            />
-            <CampoTexto
-              label="Confirmar contraseña"
-              value={passwordConfirm}
-              onChangeText={setPasswordConfirm}
-              placeholder="Repite tu contraseña"
-              secureTextEntry
-              autoComplete="password"
-              error={errores.password_confirmation?.[0]}
               onSubmitEditing={enviar}
             />
 
@@ -144,13 +157,13 @@ export default function RegistroScreen() {
             <BotonEnviar label="Crear cuenta" onPress={enviar} cargando={cargando} />
           </View>
 
-          <Pressable onPress={() => router.push('/login')} hitSlop={8} style={styles.conCuenta}>
-            <Text style={styles.conCuentaTexto}>
-              ¿Ya tienes cuenta? <Text style={styles.conCuentaStrong}>Iniciar sesión</Text>
-            </Text>
-          </Pressable>
+          <EnlaceAlternativo
+            pregunta="¿Ya tienes una cuenta?"
+            accion="Iniciar sesión"
+            onPress={() => router.push('/login')}
+          />
 
-          <Pressable onPress={() => router.dismissAll()} hitSlop={8} style={styles.sinCuenta}>
+          <Pressable onPress={salirDePantallasDeCuenta} hitSlop={8} style={styles.sinCuenta}>
             <Text style={styles.sinCuentaTexto}>Continuar sin cuenta</Text>
           </Pressable>
         </ScrollView>
@@ -165,43 +178,30 @@ const styles = StyleSheet.create({
   },
   scroll: {
     paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.five,
+    paddingBottom: Spacing.six,
     gap: Spacing.three,
   },
   titulo: {
     color: '#ffffff',
-    fontSize: 26,
+    fontSize: 34,
     fontWeight: '800',
-    letterSpacing: -0.4,
+    letterSpacing: -0.6,
   },
   subtitulo: {
     color: colors.textMuted,
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 16,
+    lineHeight: 24,
   },
   formulario: {
     gap: Spacing.three,
-    marginTop: Spacing.two,
-  },
-  conCuenta: {
-    alignItems: 'center',
-    paddingVertical: Spacing.two,
-  },
-  conCuentaTexto: {
-    color: colors.textMuted,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  conCuentaStrong: {
-    color: '#a78bfa',
-    fontWeight: '700',
+    marginTop: Spacing.three,
   },
   sinCuenta: {
     alignItems: 'center',
     paddingVertical: Spacing.two,
   },
   sinCuentaTexto: {
-    color: '#a78bfa',
+    color: colors.textMuted,
     fontSize: 14,
     fontWeight: '600',
   },

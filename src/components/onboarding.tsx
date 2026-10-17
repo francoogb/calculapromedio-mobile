@@ -9,7 +9,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
   useWindowDimensions,
   type ImageSourcePropType,
@@ -19,10 +18,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Colors, Spacing } from '@/constants/theme';
-import { useSesion } from '@/context/sesion';
-import { ApiError } from '@/lib/api';
 import { marcarOnboardingVisto } from '@/lib/storage';
-import { esCorreoValido, sugerirCorreo } from '@/lib/validacion';
 
 type Slider = {
   id: string;
@@ -65,15 +61,8 @@ const SLIDERS: Slider[] = [
 export function Onboarding({ onListo }: { onListo: () => void }) {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const { iniciarSesion } = useSesion();
   const pagerRef = useRef<ScrollView>(null);
   const [paginaActiva, setPaginaActiva] = useState(0);
-  const [mostrarLogin, setMostrarLogin] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [mensajeLogin, setMensajeLogin] = useState<string | null>(null);
-  const [cargandoLogin, setCargandoLogin] = useState(false);
-  const [mostrarPass, setMostrarPass] = useState(false);
 
   const esUltima = paginaActiva === SLIDERS.length - 1;
 
@@ -91,36 +80,11 @@ export function Onboarding({ onListo }: { onListo: () => void }) {
     router.replace('/');
   }
 
-  async function enviarLogin() {
-    if (cargandoLogin) return;
-    setMensajeLogin(null);
-    const correo = email.trim();
-    if (!correo || !password) {
-      setMensajeLogin('Ingresa tu correo y tu contraseña.');
-      return;
-    }
-    if (!esCorreoValido(correo)) {
-      const sugerencia = sugerirCorreo(correo);
-      if (sugerencia) {
-        // Dominio con typo probable: corregirlo en el campo y pedir confirmación
-        setEmail(sugerencia);
-        setMensajeLogin(`¿Tenías un error de tipeo? Corregimos el dominio a ${sugerencia}. Revisa y vuelve a intentar.`);
-      } else {
-        setMensajeLogin('La dirección de correo no parece válida. Revisa que el dominio exista (ej: nombre@correo.com).');
-      }
-      return;
-    }
-    setCargandoLogin(true);
-    try {
-      await iniciarSesion({ email: correo, password });
-      await terminar();
-    } catch (e) {
-      setMensajeLogin(
-        e instanceof ApiError ? e.message : 'Ocurrió un error inesperado. Inténtalo de nuevo.'
-      );
-    } finally {
-      setCargandoLogin(false);
-    }
+  /** Cierra el onboarding y abre la pantalla de inicio de sesión (la misma que usa el perfil). */
+  async function irALogin() {
+    await marcarOnboardingVisto();
+    onListo();
+    router.push('/login');
   }
 
   return (
@@ -192,105 +156,13 @@ export function Onboarding({ onListo }: { onListo: () => void }) {
             </LinearGradient>
           </Pressable>
 
-          <Pressable onPress={() => setMostrarLogin(true)} hitSlop={8} style={styles.loginLink}>
+          <Pressable onPress={irALogin} hitSlop={8} style={styles.loginLink}>
             <Text style={styles.loginLinkTexto}>
               ¿Ya tienes cuenta? <Text style={styles.loginLinkStrong}>Iniciar sesión</Text>
             </Text>
           </Pressable>
         </View>
       </KeyboardAvoidingView>
-
-      {/* Modal de inicio de sesión (opcional) */}
-      {mostrarLogin && (
-        <View style={styles.modalFondo}>
-          <KeyboardAvoidingView behavior="padding" style={{ alignSelf: 'stretch' }}>
-            <View style={[styles.modalCard, { backgroundColor: Colors.dark.surface, borderColor: Colors.dark.border }]}>
-              <View style={styles.modalHeader}>
-                <Text style={[styles.modalTitulo, { color: Colors.dark.text }]}>Bienvenido de nuevo</Text>
-                <Pressable onPress={() => setMostrarLogin(false)} hitSlop={10}>
-                  <Ionicons name="close" size={20} color={Colors.dark.textMuted} />
-                </Pressable>
-              </View>
-              <Text style={[styles.modalSubtitulo, { color: Colors.dark.textMuted }]}>
-                Inicia sesión para sincronizar tu progreso entre dispositivos.
-              </Text>
-
-              <Pressable
-                onPress={() => setMensajeLogin('La autenticación con Google estará disponible próximamente.')}
-                style={({ pressed }) => [styles.socialBtnGoogle, { opacity: pressed ? 0.9 : 1 }]}>
-                <Ionicons name="logo-google" size={18} color="#1f2937" />
-                <Text style={styles.socialBtnGoogleTexto}>Continuar con Google</Text>
-              </Pressable>
-              <Pressable
-                onPress={() => setMensajeLogin('La autenticación con Apple estará disponible próximamente.')}
-                style={({ pressed }) => [styles.socialBtnApple, { opacity: pressed ? 0.9 : 1 }]}>
-                <Ionicons name="logo-apple" size={20} color="#ffffff" />
-                <Text style={styles.socialBtnAppleTexto}>Continuar con Apple</Text>
-              </Pressable>
-
-              <View style={styles.divisorRow}>
-                <View style={[styles.divisorLinea, { backgroundColor: Colors.dark.border }]} />
-                <Text style={[styles.divisorTexto, { color: Colors.dark.textMuted }]}>o con tu correo</Text>
-                <View style={[styles.divisorLinea, { backgroundColor: Colors.dark.border }]} />
-              </View>
-
-              <TextInput
-                value={email}
-                onChangeText={setEmail}
-                placeholder="Correo electrónico"
-                placeholderTextColor="#94a3b8"
-                keyboardType="email-address"
-                autoCapitalize="none"
-                style={[styles.input, { borderColor: Colors.dark.border, color: Colors.dark.text }]}
-              />
-              <View>
-                <TextInput
-                  value={password}
-                  onChangeText={setPassword}
-                  placeholder="Contraseña"
-                  placeholderTextColor="#94a3b8"
-                  secureTextEntry={!mostrarPass}
-                  returnKeyType="done"
-                  onSubmitEditing={enviarLogin}
-                  style={[
-                    styles.input,
-                    { borderColor: Colors.dark.border, color: Colors.dark.text, paddingRight: 44 },
-                  ]}
-                />
-                <Pressable
-                  onPress={() => setMostrarPass((v) => !v)}
-                  hitSlop={10}
-                  accessibilityLabel={mostrarPass ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-                  style={styles.ojoBtnModal}>
-                  <Ionicons
-                    name={mostrarPass ? 'eye-off-outline' : 'eye-outline'}
-                    size={20}
-                    color="#94a3b8"
-                  />
-                </Pressable>
-              </View>
-
-              <Pressable
-                onPress={enviarLogin}
-                disabled={cargandoLogin}
-                style={({ pressed }) => [
-                  styles.boton,
-                  { opacity: cargandoLogin ? 0.6 : pressed ? 0.92 : 1, backgroundColor: '#4f46e5' },
-                ]}>
-                <Text style={styles.botonTexto}>{cargandoLogin ? 'Iniciando sesión…' : 'Iniciar sesión'}</Text>
-              </Pressable>
-
-              {mensajeLogin && (
-                <Text style={[styles.modalMensaje, { color: Colors.dark.textMuted }]}>{mensajeLogin}</Text>
-              )}
-
-              <Pressable onPress={() => setMostrarLogin(false)} hitSlop={8}>
-                <Text style={[styles.modalSaltar, { color: '#a78bfa' }]}>Continuar sin cuenta</Text>
-              </Pressable>
-            </View>
-          </KeyboardAvoidingView>
-        </View>
-      )}
     </View>
   );
 }
@@ -462,101 +334,5 @@ const styles = StyleSheet.create({
   loginLinkStrong: {
     color: '#a78bfa',
     fontWeight: '700',
-  },
-  modalFondo: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.65)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: Spacing.four,
-  },
-  modalCard: {
-    alignSelf: 'stretch',
-    borderRadius: 20,
-    borderWidth: 1,
-    padding: Spacing.four,
-    gap: Spacing.three,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  modalTitulo: {
-    fontSize: 18,
-    fontWeight: '800',
-  },
-  modalSubtitulo: {
-    fontSize: 13,
-    lineHeight: 19,
-  },
-  socialBtnGoogle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    backgroundColor: '#ffffff',
-    borderRadius: 14,
-    paddingVertical: 13,
-  },
-  socialBtnGoogleTexto: {
-    color: '#1f2937',
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  socialBtnApple: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    backgroundColor: '#000000',
-    borderRadius: 14,
-    paddingVertical: 13,
-  },
-  socialBtnAppleTexto: {
-    color: '#ffffff',
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  divisorRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  divisorLinea: {
-    flex: 1,
-    height: 1,
-  },
-  divisorTexto: {
-    fontSize: 12,
-  },
-  input: {
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 14,
-  },
-  ojoBtnModal: {
-    position: 'absolute',
-    right: 12,
-    top: 0,
-    bottom: 0,
-    justifyContent: 'center',
-  },
-
-  modalMensaje: {
-    fontSize: 12,
-    textAlign: 'center',
-  },
-  modalSaltar: {
-    fontSize: 14,
-    fontWeight: '600',
-    textAlign: 'center',
-    paddingVertical: 4,
   },
 });

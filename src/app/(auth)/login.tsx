@@ -2,17 +2,21 @@ import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BotonEnviar, CabeceraCuenta, CampoTexto, ErrorGeneral } from '@/components/cuenta/campos';
+import { BotonEnviar, CampoTexto, EnlaceAlternativo, ErrorGeneral } from '@/components/cuenta/campos';
+import { FondoDecorativo } from '@/components/cuenta/fondo';
 import { Colors, ContenidoCentrado, Spacing } from '@/constants/theme';
 import { useSesion } from '@/context/sesion';
 import { ApiError, type ErroresValidacion } from '@/lib/api';
+import { entrarAlInicio, salirDePantallasDeCuenta } from '@/lib/navegacion';
 import { esCorreoValido, sugerirCorreo } from '@/lib/validacion';
 
 const colors = Colors.dark;
 
 export default function LoginScreen() {
   const { iniciarSesion } = useSesion();
+  const insets = useSafeAreaInsets();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errores, setErrores] = useState<ErroresValidacion>({});
@@ -27,8 +31,7 @@ export default function LoginScreen() {
     setCargando(true);
     try {
       await iniciarSesion({ email: correo, password });
-      router.dismissAll();
-      router.replace('/');
+      entrarAlInicio();
     } catch (e) {
       if (e instanceof ApiError) {
         if (Object.keys(e.errores).length > 0) {
@@ -80,24 +83,23 @@ export default function LoginScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <StatusBar style="light" />
-      <CabeceraCuenta titulo="Iniciar sesión" />
+      <FondoDecorativo />
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView
-          contentContainerStyle={[styles.scroll, ContenidoCentrado]}
+          contentContainerStyle={[styles.scroll, ContenidoCentrado, { paddingTop: insets.top + Spacing.five }]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}>
-          <Text style={styles.titulo}>Bienvenido de nuevo</Text>
-          <Text style={styles.subtitulo}>
-            Inicia sesión con tu cuenta de CalculaPromedio. Es la misma que usas en la web.
-          </Text>
+          <Text style={styles.titulo}>Iniciar sesión</Text>
+          <Text style={styles.subtitulo}>Accede a tus ejercicios, progreso{'\n'}y más recursos de estudio.</Text>
 
           <View style={styles.formulario}>
             <CampoTexto
               label="Correo electrónico"
+              icono="mail-outline"
               value={email}
               onChangeText={setEmail}
-              placeholder="tucorreo@ejemplo.cl"
+              placeholder="tu@correo.cl"
               keyboardType="email-address"
               autoCapitalize="none"
               autoComplete="email"
@@ -107,6 +109,7 @@ export default function LoginScreen() {
             />
             <CampoTexto
               label="Contraseña"
+              icono="lock-closed-outline"
               value={password}
               onChangeText={setPassword}
               placeholder="Tu contraseña"
@@ -116,21 +119,22 @@ export default function LoginScreen() {
               onSubmitEditing={enviar}
             />
 
+            <Pressable onPress={() => router.push('/recuperar')} hitSlop={8} style={styles.olvido}>
+              <Text style={styles.enlace}>¿Olvidaste tu contraseña?</Text>
+            </Pressable>
+
             {errorGeneral && <ErrorGeneral mensaje={errorGeneral} />}
 
             <BotonEnviar label="Iniciar sesión" onPress={enviar} cargando={cargando} />
           </View>
 
-          <View style={styles.enlaces}>
-            <Pressable onPress={() => router.push('/recuperar')} hitSlop={8}>
-              <Text style={styles.enlace}>¿Olvidaste tu contraseña?</Text>
-            </Pressable>
-            <Pressable onPress={() => router.push('/registro')} hitSlop={8}>
-              <Text style={styles.enlaceStrong}>Crear cuenta</Text>
-            </Pressable>
-          </View>
+          <EnlaceAlternativo
+            pregunta="¿No tienes una cuenta?"
+            accion="Crear cuenta"
+            onPress={() => router.push('/registro')}
+          />
 
-          <Pressable onPress={() => router.dismissAll()} hitSlop={8} style={styles.sinCuenta}>
+          <Pressable onPress={salirDePantallasDeCuenta} hitSlop={8} style={styles.sinCuenta}>
             <Text style={styles.sinCuentaTexto}>Continuar sin cuenta</Text>
           </Pressable>
         </ScrollView>
@@ -145,45 +149,38 @@ const styles = StyleSheet.create({
   },
   scroll: {
     paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.five,
+    paddingBottom: Spacing.six,
     gap: Spacing.three,
   },
   titulo: {
     color: '#ffffff',
-    fontSize: 26,
+    fontSize: 34,
     fontWeight: '800',
-    letterSpacing: -0.4,
+    letterSpacing: -0.6,
   },
   subtitulo: {
     color: colors.textMuted,
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 16,
+    lineHeight: 24,
   },
   formulario: {
     gap: Spacing.three,
-    marginTop: Spacing.two,
+    marginTop: Spacing.three,
   },
-  enlaces: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  olvido: {
+    alignSelf: 'flex-end',
   },
   enlace: {
-    color: colors.textMuted,
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  enlaceStrong: {
-    color: '#a78bfa',
+    color: '#818cf8',
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   sinCuenta: {
     alignItems: 'center',
     paddingVertical: Spacing.two,
   },
   sinCuentaTexto: {
-    color: '#a78bfa',
+    color: colors.textMuted,
     fontSize: 14,
     fontWeight: '600',
   },

@@ -94,6 +94,59 @@ Credenciales incorrectas → 422:
 }
 ```
 
+## POST /forgot-password
+
+Envía al correo un enlace para restablecer la contraseña. No requiere token. El enlace abre la web (`/reset-password/{token}`): la contraseña nueva se escribe allí, la app no la maneja. Mismo servicio que la web (`PasswordResetService`).
+
+**Request:**
+
+```json
+{ "email": "ana@test.com" }
+```
+
+**Response 200:** `{ "message": "Hemos enviado un enlace de recuperación a tu correo electrónico." }`
+
+Correo sin cuenta o con formato inválido → 422 con `errors.email` (igual que la web, avisa si no existe la cuenta):
+
+```json
+{
+  "message": "No existe ninguna cuenta con este correo electrónico.",
+  "errors": { "email": ["No existe ninguna cuenta con este correo electrónico."] }
+}
+```
+
+Rate limit: 5 intentos por minuto (HTTP 429 al superarlo).
+
+## POST /reset-password
+
+Cambia la contraseña con el token del correo de recuperación. No requiere token de sesión. El token del correo **vence a los 60 minutos** y es de **un solo uso**. Al cambiar la contraseña se revocan todos los tokens de sesión de la app (hay que volver a iniciar sesión).
+
+**Request:**
+
+```json
+{
+  "email": "ana@test.com",
+  "token": "<token del enlace /reset-password/{token}>",
+  "password": "nueva-clave-123",
+  "password_confirmation": "nueva-clave-123"
+}
+```
+
+**Response 200:** `{ "message": "Contraseña actualizada exitosamente." }`
+
+Token incorrecto, vencido o ya usado → 422 con `errors.token`:
+
+```json
+{
+  "message": "El enlace de recuperación no es válido o ha expirado.",
+  "errors": { "token": ["El enlace de recuperación no es válido o ha expirado."] }
+}
+```
+
+Contraseña de menos de 8 caracteres o sin coincidir con la confirmación → 422 con `errors.password`. Rate limit: 5 intentos por minuto.
+
+Pantalla de la app: `src/app/(auth)/reset-password/[token].tsx`. Su ruta coincide con la URL del enlace del correo (`/reset-password/{token}?email=...`) para que, cuando estén configurados los enlaces de Android (ver `docs/MOBILE-LOGIN.md`), el mismo enlace abra la app.
+
 ## GET /me
 
 Requiere `Authorization: Bearer <token>`.

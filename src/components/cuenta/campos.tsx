@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Colors, Spacing } from '@/constants/theme';
@@ -26,9 +26,78 @@ export function CabeceraCuenta({ titulo }: { titulo: string }) {
   );
 }
 
+/** Flecha para volver, sin barra de título (pantallas de cuenta con título grande propio). */
+export function BotonVolver() {
+  return (
+    <Pressable
+      onPress={() => router.back()}
+      hitSlop={10}
+      accessibilityLabel="Volver"
+      style={({ pressed }) => [styles.botonVolver, { opacity: pressed ? 0.6 : 1 }]}>
+      <Ionicons name="arrow-back" size={26} color="#ffffff" />
+    </Pressable>
+  );
+}
+
+/** Estado final de una pantalla de cuenta: ícono, título, texto, botón principal y un enlace opcional. */
+export function EstadoCuenta({
+  titulo,
+  texto,
+  etiquetaBoton,
+  onBoton,
+  enlace,
+}: {
+  titulo: string;
+  texto: ReactNode;
+  etiquetaBoton: string;
+  onBoton: () => void;
+  enlace?: { etiqueta: string; onPress: () => void };
+}) {
+  return (
+    <>
+      <Text style={styles.estadoTitulo}>{titulo}</Text>
+      <Text style={styles.estadoTexto}>{texto}</Text>
+      <Pressable
+        onPress={onBoton}
+        style={({ pressed }) => [styles.estadoBoton, { opacity: pressed ? 0.85 : 1 }]}>
+        <Text style={styles.botonTexto}>{etiquetaBoton}</Text>
+      </Pressable>
+      {enlace && (
+        <Pressable onPress={enlace.onPress} hitSlop={8} style={styles.estadoEnlace}>
+          <Text style={styles.estadoEnlaceTexto}>{enlace.etiqueta}</Text>
+        </Pressable>
+      )}
+    </>
+  );
+}
+
+/** Línea divisoria + "¿Pregunta? Acción" (p. ej. "¿No tienes una cuenta? Crear cuenta"). */
+export function EnlaceAlternativo({
+  pregunta,
+  accion,
+  onPress,
+}: {
+  pregunta: string;
+  accion: string;
+  onPress: () => void;
+}) {
+  return (
+    <>
+      <View style={styles.divisor} />
+      <View style={styles.enlaceAlternativoFila}>
+        <Text style={styles.enlaceAlternativoTexto}>{pregunta}</Text>
+        <Pressable onPress={onPress} hitSlop={8}>
+          <Text style={styles.enlaceAlternativoAccion}>{accion}</Text>
+        </Pressable>
+      </View>
+    </>
+  );
+}
+
 /** Campo de texto con etiqueta y mensaje de error, usado en las pantallas de cuenta. */
 export function CampoTexto({
   label,
+  icono,
   value,
   onChangeText,
   placeholder,
@@ -41,6 +110,8 @@ export function CampoTexto({
   onSubmitEditing,
 }: {
   label: string;
+  /** Ícono opcional a la izquierda del campo (p. ej. sobre, candado). */
+  icono?: keyof typeof Ionicons.glyphMap;
   value: string;
   onChangeText: (texto: string) => void;
   placeholder?: string;
@@ -59,6 +130,7 @@ export function CampoTexto({
     <View style={styles.campo}>
       <Text style={styles.label}>{label}</Text>
       <View>
+        {icono && <Ionicons name={icono} size={20} color={colors.textMuted} style={styles.iconoCampo} />}
         <TextInput
           value={value}
           onChangeText={onChangeText}
@@ -72,6 +144,7 @@ export function CampoTexto({
           onSubmitEditing={onSubmitEditing}
           style={[
             styles.input,
+            icono && { paddingLeft: 46 },
             secureTextEntry && { paddingRight: 46 },
             error ? styles.inputError : null,
           ]}
@@ -152,6 +225,64 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '800',
   },
+  botonVolver: {
+    alignSelf: 'flex-start',
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+  },
+  estadoTitulo: {
+    color: '#ffffff',
+    fontSize: 34,
+    fontWeight: '800',
+    letterSpacing: -0.6,
+  },
+  estadoTexto: {
+    color: colors.textMuted,
+    fontSize: 16,
+    lineHeight: 24,
+  },
+  estadoBoton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: colors.primary,
+    marginTop: Spacing.three,
+  },
+  estadoEnlace: {
+    alignItems: 'center',
+    paddingVertical: Spacing.two,
+  },
+  estadoEnlaceTexto: {
+    color: '#22d3ee',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  divisor: {
+    height: 1,
+    backgroundColor: colors.border,
+    opacity: 0.6,
+    marginTop: Spacing.two,
+    marginHorizontal: Spacing.three,
+  },
+  enlaceAlternativoFila: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  enlaceAlternativoTexto: {
+    color: colors.textSecondary,
+    fontSize: 15,
+  },
+  enlaceAlternativoAccion: {
+    color: '#22d3ee',
+    fontSize: 15,
+    fontWeight: '700',
+    textDecorationLine: 'underline',
+  },
   campo: {
     gap: 6,
   },
@@ -164,7 +295,7 @@ const styles = StyleSheet.create({
   input: {
     height: 50,
     backgroundColor: colors.backgroundElement,
-    borderRadius: 12,
+    borderRadius: 14,
     paddingHorizontal: 14,
     color: colors.text,
     fontSize: 15,
@@ -173,6 +304,12 @@ const styles = StyleSheet.create({
   },
   inputError: {
     borderColor: colors.danger,
+  },
+  iconoCampo: {
+    position: 'absolute',
+    left: 14,
+    top: 15,
+    zIndex: 1,
   },
   ojoBtn: {
     position: 'absolute',
@@ -193,7 +330,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     height: 54,
-    borderRadius: 14,
+    borderRadius: 27,
     backgroundColor: colors.primary,
   },
   botonTexto: {

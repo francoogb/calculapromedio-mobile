@@ -27,9 +27,16 @@ const TLDS_CONOCIDOS = new Set([
   'uy', 'bo', 'ec', 've', 'py', 'gt', 'cr', 'pa', 'do', 'ni', 'hn', 'sv',
 ]);
 
+const REGEX_CORREO = /^[^\s@]+@[^\s@]+\.([^\s@]{2,})$/;
+
+/** Solo formato: algo@dominio.tld (sin espacios). No comprueba que el TLD exista. */
+export function tieneFormatoDeCorreo(email: string): boolean {
+  return REGEX_CORREO.test(email.trim());
+}
+
 /** Formato básico + TLD real: algo@dominio.tld (sin espacios, TLD conocido). */
 export function esCorreoValido(email: string): boolean {
-  const coincidencia = /^[^\s@]+@[^\s@]+\.([^\s@]{2,})$/.exec(email.trim());
+  const coincidencia = REGEX_CORREO.exec(email.trim());
   if (!coincidencia) return false;
   return TLDS_CONOCIDOS.has(coincidencia[1].toLowerCase());
 }
