@@ -86,6 +86,36 @@ export async function apiFetch<T = unknown>(
   return datos as T;
 }
 
+/** Respuesta de POST /v1/resolver-foto (prueba de modelos). */
+export type ResultadoResolverFoto = {
+  modelo: string;
+  expresion: string | null;
+  pasos: string[];
+  resultado: string | null;
+  /** Letra de la alternativa correcta (A–E) cuando el ejercicio trae alternativas. */
+  alternativa: string | null;
+  /** Conceptos teóricos usados en la solución ("Nombre: explicación"). */
+  conceptos: string[];
+  /** Fotos que le quedan al usuario hoy (null cuando la consulta fue solo de texto). */
+  restantes: number | null;
+  /** Costo de la consulta en pesos chilenos (solo para pruebas). */
+  costo_clp: number | null;
+};
+
+/**
+ * Resuelve un ejercicio a partir de una foto (base64) o de una expresión corregida
+ * por el estudiante (texto). Requiere sesión; el servidor aplica un cupo diario (429).
+ * Lanza ApiError si la respuesta no es exitosa.
+ */
+export function resolverFoto(
+  entrada: { imagen: string } | { expresion: string }
+): Promise<ResultadoResolverFoto> {
+  return apiFetch<ResultadoResolverFoto>('/resolver-foto', {
+    method: 'POST',
+    body: entrada,
+  });
+}
+
 /**
  * Se ejecuta cuando la API responde 401 (token revocado o cuenta eliminada).
  * Lo registra el SesionProvider para limpiar la sesión local sin importación circular.
