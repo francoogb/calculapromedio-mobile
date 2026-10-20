@@ -6,7 +6,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { Pressable, StyleSheet } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AnimatedSplashOverlay } from '@/components/animated-icon';
+import { PantallaCarga } from '@/components/splash/pantalla-carga';
 import { Colors, MaxContentWidth } from '@/constants/theme';
 import { SesionProvider } from '@/context/sesion';
 
@@ -182,7 +182,7 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <ThemeProvider value={DarkTheme}>
         <SesionProvider>
-          <AnimatedSplashOverlay />
+          <PantallaCarga />
           <AppTabs />
         </SesionProvider>
       </ThemeProvider>

@@ -19,7 +19,11 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.CAMERA"
+      ]
     },
     "web": {
       "output": "static",
@@ -43,7 +47,7 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#1B1844",
+          "backgroundColor": "#070B1A",
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 120
         }
@@ -53,6 +57,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "00b88b81-e677-4fca-b20a-1ffd67473135"
+      }
     }
   }
 }
